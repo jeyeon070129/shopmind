@@ -241,21 +241,24 @@ waitFB(function() {
 });
 
 // ── 대시보드 통계 ─────────────────────────────────────────────────────────────
+// ✅ 수정 (실시간)
 function loadStats() {
-  waitFB(async function() {
+  waitFB(function() {
     var fs = getFS(), db = getDB();
-    var results = await Promise.all([
-      fs.getDocs(fs.collection(db,"products")),
-      fs.getDocs(fs.collection(db,"users")),
-      fs.getDocs(fs.collection(db,"orders"))
-    ]);
-    document.getElementById("statProds").textContent  = results[0].size;
-    document.getElementById("statUsers").textContent  = results[1].size;
-    document.getElementById("statOrders").textContent = results[2].size;
-    var sales = results[2].docs.reduce(function(s,d){return s+(d.data().total||0);},0);
-    document.getElementById("statSales").textContent  = sales.toLocaleString();
+    fs.onSnapshot(fs.collection(db,"products"), function(ps) {
+      document.getElementById("statProds").textContent = ps.size;
+    });
+    fs.onSnapshot(fs.collection(db,"users"), function(us) {
+      document.getElementById("statUsers").textContent = us.size;
+    });
+    fs.onSnapshot(fs.collection(db,"orders"), function(os) {
+      document.getElementById("statOrders").textContent = os.size;
+      var sales = os.docs.reduce(function(s,d){return s+(d.data().total||0);},0);
+      document.getElementById("statSales").textContent = sales.toLocaleString();
+    });
   });
 }
+
 
 // ── 카테고리 옵션 (상품 폼용) ─────────────────────────────────────────────────
 function loadCatOptions() {
