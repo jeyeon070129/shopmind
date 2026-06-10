@@ -36,15 +36,11 @@
     .preview-box{background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:16px;display:none;}
     .preview-box.show{display:flex;align-items:center;gap:16px;}
     .preview-emoji{font-size:48px;}
-    .preview-info .name{font-size:16px;font-weight:700;color:#0f3460;}
-    .preview-info .price{font-size:15px;color:#e94560;font-weight:700;}
-    .preview-info .cat-tag{font-size:12px;background:#e8f4fd;color:#0f3460;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:4px;}
     .msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
     .msg.ok{background:#e8f5e9;color:#2e7d32;display:block;}
     .msg.err{background:#ffebee;color:#c62828;display:block;}
     .notice-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #eee;}
-    .no-data{text-align:center;padding:28px;color:#aaa;font-size:14px;}
-    .badge.done{background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;}
+    .no-data{text-align:center;padding:28px;color:#aaa;}
   </style>
 </head>
 <body>
@@ -52,22 +48,30 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
-  authDomain: "shopmind-21828.firebaseapp.com",
-  projectId: "shopmind-21828",
-  storageBucket: "shopmind-21828.firebasestorage.app",
-  messagingSenderId: "1038832915124",
-  appId: "1:1038832915124:web:7f230b88de063b737b7de1"
-};
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    window._db = db;
-    window._fs = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot };
-    window._dbReady = true;
-    document.dispatchEvent(new Event('dbReady'));
+      apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+      authDomain: "shopmind-21828.firebaseapp.com",
+      projectId: "shopmind-21828",
+      storageBucket: "shopmind-21828.firebasestorage.app",
+      messagingSenderId: "1038832915124",
+      appId: "1:1038832915124:web:7f230b88de063b737b7de1"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    window._auth = auth;
+    window._db   = db;
+    window._authFn = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot };
+    window._fbReady = true;
+    document.dispatchEvent(new Event('fbReady'));
   </script>
 <nav>
   <div class="logo" onclick="location.href='index.html'">Shop<span>Mind</span> <span style="font-size:13px;color:#f39c12;">관리자</span></div>
@@ -82,7 +86,6 @@
     <button onclick="switchTab('notice')">📢 공지사항</button>
   </div>
 
-  <!-- 대시보드 -->
   <div class="tab-content show" id="tab-dashboard">
     <div class="stats">
       <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-val" id="statProds">-</div><div class="stat-label">등록 상품수</div></div>
@@ -92,44 +95,39 @@
     </div>
   </div>
 
-  <!-- 상품 관리 -->
   <div class="tab-content" id="tab-products">
     <div class="card">
       <h3>➕ 상품 추가</h3>
       <div id="prodMsg" class="msg"></div>
       <div class="preview-box" id="previewBox">
         <div class="preview-emoji" id="pvEmoji">🎁</div>
-        <div class="preview-info">
-          <div class="cat-tag" id="pvCat">카테고리</div>
-          <div class="name" id="pvName">상품명</div>
-          <div class="price" id="pvPrice">₩0</div>
+        <div>
+          <div style="font-size:13px;background:#e8f4fd;color:#0f3460;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:4px;" id="pvCat">카테고리</div>
+          <div style="font-size:16px;font-weight:700;color:#0f3460;" id="pvName">상품명</div>
+          <div style="font-size:15px;color:#e94560;font-weight:700;" id="pvPrice">₩0</div>
         </div>
       </div>
       <div class="prod-form">
-        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품명 *</label><input id="pName" placeholder="예: 무선 이어폰" oninput="updatePreview()"/></div>
-        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">가격 (원) *</label><input id="pPrice" type="number" placeholder="예: 59000" oninput="updatePreview()"/></div>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품명 *</label><input id="pName" oninput="updatePreview()"/></div>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">가격 (원) *</label><input id="pPrice" type="number" oninput="updatePreview()"/></div>
         <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">카테고리 *</label>
-          <select id="pCat" onchange="updatePreview()"><option value="">선택</option><option>전자기기</option><option>패션</option><option>생활용품</option><option>식품</option></select>
-        </div>
-        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">이모지 *</label><input id="pEmoji" placeholder="예: 🎧" maxlength="4" oninput="updatePreview()"/></div>
-        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품 설명 *</label><textarea id="pDesc" placeholder="상품 설명을 입력하세요."></textarea></div>
+          <select id="pCat" onchange="updatePreview()"><option value="">선택</option><option>전자기기</option><option>패션</option><option>생활용품</option><option>식품</option></select></div>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">이모지 *</label><input id="pEmoji" maxlength="4" oninput="updatePreview()"/></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품 설명 *</label><textarea id="pDesc"></textarea></div>
         <button class="submit-btn" onclick="addProduct()">✅ 상품 등록하기</button>
       </div>
     </div>
     <div class="card"><h3>📋 등록된 상품 목록</h3><div id="productTable"><div class="no-data">로딩 중...</div></div></div>
   </div>
 
-  <!-- 주문 내역 -->
   <div class="tab-content" id="tab-orders">
     <div class="card"><h3>🧾 전체 주문 내역</h3><div id="orderTable"><div class="no-data">로딩 중...</div></div></div>
   </div>
 
-  <!-- 회원 관리 -->
   <div class="tab-content" id="tab-users">
     <div class="card"><h3>👥 회원 목록</h3><div id="userTable"><div class="no-data">로딩 중...</div></div></div>
   </div>
 
-  <!-- 공지사항 -->
   <div class="tab-content" id="tab-notice">
     <div class="card">
       <h3>📢 공지사항 관리</h3>
@@ -143,10 +141,18 @@
 </div>
 
 <script>
-  const uid=sessionStorage.getItem('sm_uid');
-  if(uid!=='admin'){alert('관리자만 접근 가능합니다.');location.href='index.html';}
+  function waitFB(fn){ if(window._fbReady) fn(); else document.addEventListener('fbReady',fn,{once:true}); }
 
-  function waitDB(fn){ if(window._dbReady) fn(); else document.addEventListener('dbReady',fn,{once:true}); }
+  waitFB(()=>{
+    window._authFn.onAuthStateChanged(window._auth, async user=>{
+      if(!user){location.href='login.html';return;}
+      const {doc,getDoc}=window._fsFn;
+      const snap=await getDoc(doc(window._db,'users',user.uid));
+      if(!snap.exists()||snap.data().role!=='admin'){alert('관리자만 접근 가능합니다.');location.href='index.html';}
+      else loadStats();
+    });
+  });
+
   function switchTab(t){
     const ids=['dashboard','products','orders','users','notice'];
     document.querySelectorAll('.tab-nav button').forEach((b,i)=>b.classList.toggle('active',ids[i]===t));
@@ -175,21 +181,21 @@
     const desc=document.getElementById('pDesc').value.trim();
     const msg=document.getElementById('prodMsg');
     if(!name||!price||!cat||!emoji||!desc){msg.textContent='❌ 모든 항목을 입력해주세요.';msg.className='msg err';return;}
-    waitDB(async()=>{
-      const {collection,addDoc}=window._fs;
+    waitFB(async()=>{
+      const {collection,addDoc}=window._fsFn;
       await addDoc(collection(window._db,'products'),{name,price,cat,emoji,desc});
       msg.textContent='✅ 상품이 등록되었습니다!';msg.className='msg ok';
       ['pName','pPrice','pEmoji','pDesc'].forEach(id=>document.getElementById(id).value='');
       document.getElementById('pCat').value='';
       document.getElementById('previewBox').classList.remove('show');
-      loadProducts();
+      loadProducts();loadStats();
       setTimeout(()=>{msg.className='msg';},3000);
     });
   }
 
   function loadProducts(){
-    waitDB(async()=>{
-      const {collection,getDocs}=window._fs;
+    waitFB(async()=>{
+      const {collection,getDocs}=window._fsFn;
       const snap=await getDocs(collection(window._db,'products'));
       const el=document.getElementById('productTable');
       if(snap.empty){el.innerHTML='<div class="no-data">등록된 상품이 없습니다.</div>';return;}
@@ -207,23 +213,19 @@
 
   async function delProduct(id){
     if(!confirm('정말 삭제하시겠습니까?'))return;
-    waitDB(async()=>{
-      const {doc,deleteDoc}=window._fs;
-      await deleteDoc(doc(window._db,'products',id));
-      loadProducts();loadStats();
-    });
+    waitFB(async()=>{const {doc,deleteDoc}=window._fsFn;await deleteDoc(doc(window._db,'products',id));loadProducts();loadStats();});
   }
 
   function loadOrders(){
-    waitDB(async()=>{
-      const {collection,getDocs}=window._fs;
+    waitFB(async()=>{
+      const {collection,getDocs}=window._fsFn;
       const snap=await getDocs(collection(window._db,'orders'));
       const el=document.getElementById('orderTable');
       if(snap.empty){el.innerHTML='<div class="no-data">주문 내역이 없습니다.</div>';return;}
-      el.innerHTML=`<table><tr><th>주문번호</th><th>회원</th><th>상품</th><th>결제수단</th><th>금액</th><th>날짜</th></tr>
+      el.innerHTML=`<table><tr><th>주문번호</th><th>이메일</th><th>상품</th><th>결제수단</th><th>금액</th><th>날짜</th></tr>
       ${snap.docs.map(d=>{const o=d.data();return`<tr>
         <td style="font-size:12px;color:#888;">${o.orderNo}</td>
-        <td>${o.uid}</td>
+        <td>${o.email||o.uid}</td>
         <td>${o.items.map(i=>i.name).join(', ')}</td>
         <td>${o.pay}</td>
         <td style="color:#e94560;font-weight:700;">₩${o.total.toLocaleString()}</td>
@@ -233,14 +235,15 @@
   }
 
   function loadUsers(){
-    waitDB(async()=>{
-      const {collection,getDocs,doc,deleteDoc}=window._fs;
+    waitFB(async()=>{
+      const {collection,getDocs,doc,deleteDoc}=window._fsFn;
       const snap=await getDocs(collection(window._db,'users'));
       const el=document.getElementById('userTable');
       if(snap.empty){el.innerHTML='<div class="no-data">회원이 없습니다.</div>';return;}
-      el.innerHTML=`<table><tr><th>아이디</th><th>이름</th><th>가입일</th><th>관리</th></tr>
+      el.innerHTML=`<table><tr><th>이메일</th><th>이름</th><th>권한</th><th>가입일</th><th>관리</th></tr>
       ${snap.docs.map(d=>{const u=d.data();return`<tr>
-        <td>${d.id}</td><td>${u.name}</td>
+        <td>${u.email}</td><td>${u.name}</td>
+        <td><span style="background:${u.role==='admin'?'#fff8e1':'#f0f4ff'};color:${u.role==='admin'?'#f57f17':'#0f3460'};padding:2px 8px;border-radius:10px;font-size:12px;">${u.role==='admin'?'관리자':'일반회원'}</span></td>
         <td style="font-size:12px;color:#888;">${u.createdAt?u.createdAt.substring(0,10):'-'}</td>
         <td><button class="del-btn" onclick="delUser('${d.id}')">🗑 삭제</button></td>
       </tr>`;}).join('')}</table>`;
@@ -248,29 +251,24 @@
   }
 
   async function delUser(id){
-    if(!confirm(id+'님을 삭제하시겠습니까?'))return;
-    waitDB(async()=>{
-      const {doc,deleteDoc}=window._fs;
-      await deleteDoc(doc(window._db,'users',id));
-      loadUsers();loadStats();
-    });
+    if(!confirm('정말 삭제하시겠습니까?'))return;
+    waitFB(async()=>{const {doc,deleteDoc}=window._fsFn;await deleteDoc(doc(window._db,'users',id));loadUsers();loadStats();});
   }
 
   function loadStats(){
-    waitDB(async()=>{
-      const {collection,getDocs}=window._fs, db=window._db;
+    waitFB(async()=>{
+      const {collection,getDocs}=window._fsFn, db=window._db;
       const [ps,us,os]=await Promise.all([getDocs(collection(db,'products')),getDocs(collection(db,'users')),getDocs(collection(db,'orders'))]);
       document.getElementById('statProds').textContent=ps.size;
       document.getElementById('statUsers').textContent=us.size;
       document.getElementById('statOrders').textContent=os.size;
-      const sales=os.docs.reduce((s,d)=>s+(d.data().total||0),0);
-      document.getElementById('statSales').textContent=sales.toLocaleString();
+      document.getElementById('statSales').textContent=os.docs.reduce((s,d)=>s+(d.data().total||0),0).toLocaleString();
     });
   }
 
   function loadNotices(){
-    waitDB(async()=>{
-      const {collection,getDocs,doc,deleteDoc}=window._fs;
+    waitFB(async()=>{
+      const {collection,getDocs,doc,deleteDoc}=window._fsFn;
       const snap=await getDocs(collection(window._db,'notices'));
       const el=document.getElementById('noticeList');
       if(snap.empty){el.innerHTML='<div class="no-data">공지가 없습니다.</div>';return;}
@@ -285,23 +283,16 @@
   async function addNotice(){
     const t=document.getElementById('noticeTitle').value.trim();
     if(!t)return alert('공지 내용을 입력해주세요.');
-    waitDB(async()=>{
-      const {collection,addDoc}=window._fs;
+    waitFB(async()=>{
+      const {collection,addDoc}=window._fsFn;
       await addDoc(collection(window._db,'notices'),{text:t,createdAt:new Date().toISOString()});
-      document.getElementById('noticeTitle').value='';
-      loadNotices();
+      document.getElementById('noticeTitle').value='';loadNotices();
     });
   }
 
   async function delNotice(id){
-    waitDB(async()=>{
-      const {doc,deleteDoc}=window._fs;
-      await deleteDoc(doc(window._db,'notices',id));
-      loadNotices();
-    });
+    waitFB(async()=>{const {doc,deleteDoc}=window._fsFn;await deleteDoc(doc(window._db,'notices',id));loadNotices();});
   }
-
-  loadStats();
 </script>
 </body>
 </html>

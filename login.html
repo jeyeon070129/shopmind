@@ -7,7 +7,7 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;display:flex;align-items:center;justify-content:center;}
-    .box{background:#fff;border-radius:20px;padding:44px 40px;width:400px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+    .box{background:#fff;border-radius:20px;padding:44px 40px;width:420px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
     .logo{text-align:center;margin-bottom:28px;}
     .logo h1{font-size:28px;color:#0f3460;letter-spacing:-1px;}
     .logo span{color:#e94560;}
@@ -18,13 +18,20 @@
     label{display:block;margin-bottom:5px;font-size:13px;color:#555;font-weight:600;}
     input{width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;transition:.2s;}
     input:focus{border-color:#0f3460;}
-    .btn{width:100%;padding:13px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;}
+    .pw-wrap{position:relative;}
+    .pw-wrap input{padding-right:44px;}
+    .pw-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:#aaa;}
+    .pw-strength{margin-top:6px;height:4px;border-radius:4px;background:#eee;overflow:hidden;}
+    .pw-strength-bar{height:100%;width:0;transition:.3s;border-radius:4px;}
+    .pw-hint{font-size:11px;color:#aaa;margin-top:4px;}
+    .btn{width:100%;padding:13px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;transition:.15s;}
     .btn:hover{opacity:.88;}
+    .btn:disabled{opacity:.5;cursor:not-allowed;}
     .msg{margin-top:12px;text-align:center;font-size:13px;padding:9px;border-radius:8px;}
     .msg.ok{background:#e8f5e9;color:#2e7d32;}
     .msg.err{background:#ffebee;color:#c62828;}
+    .security-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa;justify-content:center;margin-top:16px;}
     .hidden{display:none;}
-    .loading{text-align:center;padding:10px;color:#888;font-size:13px;}
   </style>
 </head>
 <body>
@@ -32,93 +39,208 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
-  authDomain: "shopmind-21828.firebaseapp.com",
-  projectId: "shopmind-21828",
-  storageBucket: "shopmind-21828.firebasestorage.app",
-  messagingSenderId: "1038832915124",
-  appId: "1:1038832915124:web:7f230b88de063b737b7de1"
-};
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    window._db = db;
-    window._fs = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot };
-    window._dbReady = true;
-    document.dispatchEvent(new Event('dbReady'));
+      apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+      authDomain: "shopmind-21828.firebaseapp.com",
+      projectId: "shopmind-21828",
+      storageBucket: "shopmind-21828.firebasestorage.app",
+      messagingSenderId: "1038832915124",
+      appId: "1:1038832915124:web:7f230b88de063b737b7de1"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    window._auth = auth;
+    window._db   = db;
+    window._authFn = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot };
+    window._fbReady = true;
+    document.dispatchEvent(new Event('fbReady'));
   </script>
 <div class="box">
-  <div class="logo"><h1>Shop<span>Mind</span></h1><p style="font-size:13px;color:#999;margin-top:4px;">스마트한 쇼핑의 시작</p></div>
+  <div class="logo">
+    <h1>Shop<span>Mind</span></h1>
+    <p style="font-size:13px;color:#999;margin-top:4px;">스마트한 쇼핑의 시작</p>
+  </div>
   <div class="tabs">
     <button class="active" onclick="switchTab('login')">로그인</button>
     <button onclick="switchTab('signup')">회원가입</button>
   </div>
+
+  <!-- 로그인 폼 -->
   <div id="loginForm">
-    <div class="form-group"><label>아이디</label><input id="lid" placeholder="아이디 입력"/></div>
-    <div class="form-group"><label>비밀번호</label><input type="password" id="lpw" placeholder="비밀번호 입력"/></div>
-    <button class="btn" onclick="login()">로그인</button>
+    <div class="form-group">
+      <label>이메일</label>
+      <input id="lemail" type="email" placeholder="이메일 주소 입력"/>
+    </div>
+    <div class="form-group">
+      <label>비밀번호</label>
+      <div class="pw-wrap">
+        <input id="lpw" type="password" placeholder="비밀번호 입력"/>
+        <button class="pw-toggle" onclick="togglePw('lpw',this)">👁</button>
+      </div>
+    </div>
+    <button class="btn" id="loginBtn" onclick="login()">로그인</button>
   </div>
+
+  <!-- 회원가입 폼 -->
   <div id="signupForm" class="hidden">
-    <div class="form-group"><label>이름</label><input id="sname" placeholder="이름 입력"/></div>
-    <div class="form-group"><label>아이디</label><input id="sid" placeholder="아이디 (4자 이상)"/></div>
-    <div class="form-group"><label>비밀번호</label><input type="password" id="spw" placeholder="비밀번호 (6자 이상)"/></div>
-    <div class="form-group"><label>비밀번호 확인</label><input type="password" id="spw2" placeholder="비밀번호 재입력"/></div>
-    <button class="btn" onclick="signup()">회원가입</button>
+    <div class="form-group">
+      <label>이름</label>
+      <input id="sname" placeholder="이름 입력"/>
+    </div>
+    <div class="form-group">
+      <label>이메일</label>
+      <input id="semail" type="email" placeholder="이메일 주소 입력"/>
+    </div>
+    <div class="form-group">
+      <label>비밀번호</label>
+      <div class="pw-wrap">
+        <input id="spw" type="password" placeholder="8자 이상, 영문+숫자+특수문자" oninput="checkStrength(this.value)"/>
+        <button class="pw-toggle" onclick="togglePw('spw',this)">👁</button>
+      </div>
+      <div class="pw-strength"><div class="pw-strength-bar" id="strengthBar"></div></div>
+      <div class="pw-hint" id="strengthHint">비밀번호를 입력해주세요</div>
+    </div>
+    <div class="form-group">
+      <label>비밀번호 확인</label>
+      <div class="pw-wrap">
+        <input id="spw2" type="password" placeholder="비밀번호 재입력"/>
+        <button class="pw-toggle" onclick="togglePw('spw2',this)">👁</button>
+      </div>
+    </div>
+    <div class="form-group" style="display:flex;align-items:flex-start;gap:8px;">
+      <input type="checkbox" id="agree" style="width:auto;margin-top:3px;"/>
+      <label for="agree" style="font-size:12px;color:#555;cursor:pointer;">
+        <a href="#" style="color:#0f3460;">[필수] 개인정보 처리방침</a> 및
+        <a href="#" style="color:#0f3460;">[필수] 이용약관</a>에 동의합니다.
+      </label>
+    </div>
+    <button class="btn" id="signupBtn" onclick="signup()">회원가입</button>
   </div>
+
   <div id="msg"></div>
+  <div class="security-badge">🔒 Firebase Authentication으로 보호됨</div>
 </div>
 
 <script>
+  function waitFB(fn){ if(window._fbReady) fn(); else document.addEventListener('fbReady',fn,{once:true}); }
+
   function switchTab(t){
-    document.getElementById('loginForm').classList.toggle('hidden',t!=='login');
-    document.getElementById('signupForm').classList.toggle('hidden',t!=='signup');
-    document.querySelectorAll('.tabs button')[0].classList.toggle('active',t==='login');
-    document.querySelectorAll('.tabs button')[1].classList.toggle('active',t==='signup');
+    document.getElementById('loginForm').classList.toggle('hidden', t!=='login');
+    document.getElementById('signupForm').classList.toggle('hidden', t!=='signup');
+    document.querySelectorAll('.tabs button')[0].classList.toggle('active', t==='login');
+    document.querySelectorAll('.tabs button')[1].classList.toggle('active', t==='signup');
     showMsg('','');
   }
-  function showMsg(txt,type){const el=document.getElementById('msg');el.textContent=txt;el.className='msg '+(txt?type:'');}
 
-  function waitDB(fn){ if(window._dbReady) fn(); else document.addEventListener('dbReady',fn,{once:true}); }
+  function showMsg(txt, type){
+    const el=document.getElementById('msg');
+    el.textContent=txt; el.className='msg '+(txt?type:'');
+  }
 
-  async function signup(){
+  function togglePw(id, btn){
+    const el=document.getElementById(id);
+    if(el.type==='password'){el.type='text';btn.textContent='🙈';}
+    else{el.type='password';btn.textContent='👁';}
+  }
+
+  function checkStrength(pw){
+    const bar=document.getElementById('strengthBar');
+    const hint=document.getElementById('strengthHint');
+    let score=0;
+    if(pw.length>=8) score++;
+    if(/[A-Za-z]/.test(pw)) score++;
+    if(/[0-9]/.test(pw)) score++;
+    if(/[^A-Za-z0-9]/.test(pw)) score++;
+    const colors=['#ccc','#e94560','#f39c12','#27ae60','#0f3460'];
+    const labels=['','취약 🔴','보통 🟡','강함 🟢','매우 강함 💪'];
+    bar.style.width=(score*25)+'%';
+    bar.style.background=colors[score];
+    hint.textContent=pw?labels[score]:'비밀번호를 입력해주세요';
+  }
+
+  function signup(){
     const name=document.getElementById('sname').value.trim();
-    const id=document.getElementById('sid').value.trim();
+    const email=document.getElementById('semail').value.trim();
     const pw=document.getElementById('spw').value;
     const pw2=document.getElementById('spw2').value;
-    if(!name||!id||!pw||!pw2)return showMsg('모든 항목을 입력해주세요.','err');
-    if(id.length<4)return showMsg('아이디는 4자 이상이어야 합니다.','err');
-    if(pw.length<6)return showMsg('비밀번호는 6자 이상이어야 합니다.','err');
-    if(pw!==pw2)return showMsg('비밀번호가 일치하지 않습니다.','err');
-    showMsg('처리 중...','ok');
-    waitDB(async()=>{
-      const {doc,getDoc,setDoc}=window._fs, db=window._db;
-      const ref=doc(db,'users',id);
-      const snap=await getDoc(ref);
-      if(snap.exists())return showMsg('이미 존재하는 아이디입니다.','err');
-      await setDoc(ref,{name,pw,createdAt:new Date().toISOString()});
-      showMsg('✅ 회원가입 완료! 로그인해주세요.','ok');
-      switchTab('login');
+    const agree=document.getElementById('agree').checked;
+
+    if(!name||!email||!pw||!pw2) return showMsg('모든 항목을 입력해주세요.','err');
+    if(pw.length<8) return showMsg('비밀번호는 8자 이상이어야 합니다.','err');
+    if(!/[A-Za-z]/.test(pw)||!/[0-9]/.test(pw)) return showMsg('비밀번호에 영문과 숫자를 포함해주세요.','err');
+    if(pw!==pw2) return showMsg('비밀번호가 일치하지 않습니다.','err');
+    if(!agree) return showMsg('약관에 동의해주세요.','err');
+
+    const btn=document.getElementById('signupBtn');
+    btn.disabled=true; btn.textContent='처리 중...';
+    showMsg('','');
+
+    waitFB(async()=>{
+      try{
+        const {createUserWithEmailAndPassword}=window._authFn;
+        const {doc,setDoc}=window._fsFn;
+        const cred=await createUserWithEmailAndPassword(window._auth, email, pw);
+        await setDoc(doc(window._db,'users',cred.user.uid),{
+          name, email,
+          role: email==='admin@shopmind.com' ? 'admin' : 'user',
+          createdAt: new Date().toISOString()
+        });
+        showMsg('✅ 회원가입 완료! 로그인해주세요.','ok');
+        switchTab('login');
+      } catch(e){
+        const errMap={
+          'auth/email-already-in-use':'이미 사용 중인 이메일입니다.',
+          'auth/invalid-email':'이메일 형식이 올바르지 않습니다.',
+          'auth/weak-password':'비밀번호가 너무 약합니다.'
+        };
+        showMsg(errMap[e.code]||'오류: '+e.message,'err');
+      } finally{
+        btn.disabled=false; btn.textContent='회원가입';
+      }
     });
   }
 
-  async function login(){
-    const id=document.getElementById('lid').value.trim();
+  function login(){
+    const email=document.getElementById('lemail').value.trim();
     const pw=document.getElementById('lpw').value;
-    if(!id||!pw)return showMsg('아이디와 비밀번호를 입력해주세요.','err');
-    showMsg('로그인 중...','ok');
-    waitDB(async()=>{
-      const {doc,getDoc}=window._fs, db=window._db;
-      const snap=await getDoc(doc(db,'users',id));
-      if(!snap.exists()||snap.data().pw!==pw)return showMsg('아이디 또는 비밀번호가 틀렸습니다.','err');
-      sessionStorage.setItem('sm_uid',id);
-      sessionStorage.setItem('sm_name',snap.data().name);
-      location.href='index.html';
+    if(!email||!pw) return showMsg('이메일과 비밀번호를 입력해주세요.','err');
+
+    const btn=document.getElementById('loginBtn');
+    btn.disabled=true; btn.textContent='로그인 중...';
+
+    waitFB(async()=>{
+      try{
+        const {signInWithEmailAndPassword}=window._authFn;
+        await signInWithEmailAndPassword(window._auth, email, pw);
+        location.href='index.html';
+      } catch(e){
+        const errMap={
+          'auth/user-not-found':'존재하지 않는 계정입니다.',
+          'auth/wrong-password':'비밀번호가 틀렸습니다.',
+          'auth/invalid-credential':'이메일 또는 비밀번호가 틀렸습니다.',
+          'auth/too-many-requests':'로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.'
+        };
+        showMsg(errMap[e.code]||'로그인 오류: '+e.message,'err');
+        btn.disabled=false; btn.textContent='로그인';
+      }
     });
   }
 
-  window.onload=()=>{ if(sessionStorage.getItem('sm_uid')) location.href='index.html'; };
+  // 이미 로그인된 경우 자동 이동
+  waitFB(()=>{
+    window._authFn.onAuthStateChanged(window._auth, user=>{
+      if(user) location.href='index.html';
+    });
+  });
 </script>
 </body>
 </html>

@@ -69,8 +69,7 @@
     .detail-add{width:100%;padding:13px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;}
     footer{background:#0f3460;color:#aaa;text-align:center;padding:22px;font-size:13px;}
     .notice-bar{background:#fff8e1;border-left:4px solid #f39c12;padding:10px 40px;font-size:13px;color:#795548;}
-    .no-result{text-align:center;padding:40px;color:#aaa;}
-    .loading-screen{text-align:center;padding:60px;color:#888;font-size:16px;}
+    .loading-screen{text-align:center;padding:60px;color:#888;}
   </style>
 </head>
 <body>
@@ -78,24 +77,31 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
-  authDomain: "shopmind-21828.firebaseapp.com",
-  projectId: "shopmind-21828",
-  storageBucket: "shopmind-21828.firebasestorage.app",
-  messagingSenderId: "1038832915124",
-  appId: "1:1038832915124:web:7f230b88de063b737b7de1"
-};
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    window._db = db;
-    window._fs = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot };
-    window._dbReady = true;
-    document.dispatchEvent(new Event('dbReady'));
-  </script>
+      apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+      authDomain: "shopmind-21828.firebaseapp.com",
+      projectId: "shopmind-21828",
+      storageBucket: "shopmind-21828.firebasestorage.app",
+      messagingSenderId: "1038832915124",
+      appId: "1:1038832915124:web:7f230b88de063b737b7de1"
+    };
 
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    window._auth = auth;
+    window._db   = db;
+    window._authFn = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot };
+    window._fbReady = true;
+    document.dispatchEvent(new Event('fbReady'));
+  </script>
 <nav>
   <div class="logo">Shop<span>Mind</span></div>
   <div class="nav-links"><a href="#">홈</a><a href="#">신상품</a><a href="#">베스트</a><a href="#">세일</a></div>
@@ -124,7 +130,7 @@
 </div>
 <div class="section" id="products">
   <div class="section-title">🔥 인기 상품</div>
-  <div class="products" id="productGrid"><div class="loading-screen">⏳ 상품 불러오는 중...</div></div>
+  <div class="products" id="productGrid"><div class="loading-screen">⏳ 로딩 중...</div></div>
 </div>
 <footer>© 2025 ShopMind. All rights reserved.</footer>
 
@@ -147,53 +153,55 @@
 </div>
 
 <script>
-  const uid = sessionStorage.getItem('sm_uid');
-  const uname = sessionStorage.getItem('sm_name');
-  if(!uid) location.href='login.html';
-  document.getElementById('userInfo').textContent = uname+'님 👋';
-  if(uid==='admin') document.getElementById('adminBtn').style.display='block';
+  let currentUser=null, allProducts=[], curCat='전체', cart=[];
 
-  let allProducts=[], curCat='전체';
-  let cart = JSON.parse(sessionStorage.getItem('sm_cart_'+uid)||'[]');
+  function waitFB(fn){ if(window._fbReady) fn(); else document.addEventListener('fbReady',fn,{once:true}); }
 
-  function waitDB(fn){ if(window._dbReady) fn(); else document.addEventListener('dbReady',fn,{once:true}); }
+  waitFB(()=>{
+    window._authFn.onAuthStateChanged(window._auth, async user=>{
+      if(!user){ location.href='login.html'; return; }
+      currentUser=user;
+      // 유저 정보
+      const {doc,getDoc,collection,onSnapshot}=window._fsFn;
+      const snap=await getDoc(doc(window._db,'users',user.uid));
+      const data=snap.data()||{};
+      document.getElementById('userInfo').textContent=(data.name||user.email)+'님 👋';
+      if(data.role==='admin') document.getElementById('adminBtn').style.display='block';
 
-  // 상품 실시간 구독
-  waitDB(()=>{
-    const {collection, onSnapshot, query, orderBy} = window._fs;
-    const db = window._db;
+      // 장바구니 복원
+      cart=JSON.parse(sessionStorage.getItem('cart_'+user.uid)||'[]');
+      updateCount();
 
-    // 공지
-    onSnapshot(collection(db,'notices'), snap=>{
-      const notices=snap.docs.map(d=>d.data().text);
-      if(notices.length){
-        document.getElementById('noticeBar').style.display='block';
-        document.getElementById('noticeBar').textContent='📢 '+notices[0];
-      }
-    });
+      // 공지 실시간
+      onSnapshot(collection(window._db,'notices'), snap=>{
+        if(!snap.empty){
+          document.getElementById('noticeBar').style.display='block';
+          document.getElementById('noticeBar').textContent='📢 '+snap.docs[0].data().text;
+        }
+      });
 
-    // 상품 (기본 상품 없으면 자동 초기화)
-    onSnapshot(collection(db,'products'), async snap=>{
-      if(snap.empty){
-        // 기본 상품 자동 등록
-        const defaults=[
-          {name:'에어팟 프로',desc:'액티브 노이즈 캔슬링 프리미엄 무선 이어폰. 최대 30시간 배터리.',price:189000,emoji:'🎧',cat:'전자기기'},
-          {name:'스마트워치 Pro',desc:'심박수, 혈중산소, GPS 탑재 올인원 스마트워치.',price:259000,emoji:'⌚',cat:'전자기기'},
-          {name:'무선 블루투스 키보드',desc:'슬림 디자인 블루투스 키보드. 3대 멀티페어링.',price:79000,emoji:'⌨️',cat:'전자기기'},
-          {name:'프리미엄 캐시미어 니트',desc:'부드럽고 따뜻한 100% 캐시미어 소재.',price:128000,emoji:'🧥',cat:'패션'},
-          {name:'레더 크로스백',desc:'고급 인조가죽 소재의 미니 크로스백.',price:65000,emoji:'👜',cat:'패션'},
-          {name:'공기청정기 미니',desc:'헤파필터 소형 공기청정기. 조용하고 강력.',price:95000,emoji:'💨',cat:'생활용품'},
-          {name:'유기농 그래놀라',desc:'설탕 무첨가 100% 유기농 그래놀라.',price:18000,emoji:'🥣',cat:'식품'},
-          {name:'콜드브루 커피 세트',desc:'진하고 부드러운 콜드브루 10팩 세트.',price:24000,emoji:'☕',cat:'식품'},
-          {name:'LED 스탠드 조명',desc:'3단 밝기 조절 LED 스탠드. USB 충전포트.',price:45000,emoji:'💡',cat:'생활용품'},
-          {name:'러닝화 에어쿠션',desc:'충격흡수 에어쿠션 밑창. 통기성 좋은 러닝화.',price:89000,emoji:'👟',cat:'패션'},
-        ];
-        const {collection:col, addDoc} = window._fs;
-        for(const p of defaults) await addDoc(col(db,'products'),p);
-        return;
-      }
-      allProducts = snap.docs.map(d=>({id:d.id,...d.data()}));
-      filterProducts();
+      // 상품 실시간
+      onSnapshot(collection(window._db,'products'), async snap=>{
+        if(snap.empty){
+          const defaults=[
+            {name:'에어팟 프로',desc:'액티브 노이즈 캔슬링 프리미엄 무선 이어폰. 최대 30시간 배터리.',price:189000,emoji:'🎧',cat:'전자기기'},
+            {name:'스마트워치 Pro',desc:'심박수, 혈중산소, GPS 탑재 올인원 스마트워치.',price:259000,emoji:'⌚',cat:'전자기기'},
+            {name:'무선 블루투스 키보드',desc:'슬림 디자인 블루투스 키보드. 3대 멀티페어링.',price:79000,emoji:'⌨️',cat:'전자기기'},
+            {name:'프리미엄 캐시미어 니트',desc:'부드럽고 따뜻한 100% 캐시미어 소재.',price:128000,emoji:'🧥',cat:'패션'},
+            {name:'레더 크로스백',desc:'고급 인조가죽 미니 크로스백.',price:65000,emoji:'👜',cat:'패션'},
+            {name:'공기청정기 미니',desc:'헤파필터 소형 공기청정기.',price:95000,emoji:'💨',cat:'생활용품'},
+            {name:'유기농 그래놀라',desc:'설탕 무첨가 100% 유기농 그래놀라.',price:18000,emoji:'🥣',cat:'식품'},
+            {name:'콜드브루 커피 세트',desc:'진하고 부드러운 콜드브루 10팩.',price:24000,emoji:'☕',cat:'식품'},
+            {name:'LED 스탠드 조명',desc:'3단 밝기 조절 LED 스탠드.',price:45000,emoji:'💡',cat:'생활용품'},
+            {name:'러닝화 에어쿠션',desc:'충격흡수 에어쿠션 밑창 러닝화.',price:89000,emoji:'👟',cat:'패션'},
+          ];
+          const {collection:col,addDoc}=window._fsFn;
+          for(const p of defaults) await addDoc(col(window._db,'products'),p);
+          return;
+        }
+        allProducts=snap.docs.map(d=>({id:d.id,...d.data()}));
+        filterProducts();
+      });
     });
   });
 
@@ -201,10 +209,10 @@
 
   function filterProducts(){
     const q=document.getElementById('searchInput').value.toLowerCase();
-    const filtered=allProducts.filter(p=>(curCat==='전체'||p.cat===curCat)&&(p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q)));
+    const f=allProducts.filter(p=>(curCat==='전체'||p.cat===curCat)&&(p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q)));
     const grid=document.getElementById('productGrid');
-    if(!filtered.length){grid.innerHTML='<div class="no-result">😢 상품이 없습니다.</div>';return;}
-    grid.innerHTML=filtered.map(p=>`
+    if(!f.length){grid.innerHTML='<div style="text-align:center;padding:40px;color:#aaa;">😢 상품이 없습니다.</div>';return;}
+    grid.innerHTML=f.map(p=>`
       <div class="card">
         <div class="card-img" onclick="openDetail('${p.id}')">${p.emoji}</div>
         <div class="card-body">
@@ -219,17 +227,17 @@
       </div>`).join('');
   }
 
+  function saveCart(){ if(currentUser) sessionStorage.setItem('cart_'+currentUser.uid, JSON.stringify(cart)); }
+  function updateCount(){ document.getElementById('cartCount').textContent=cart.reduce((s,i)=>s+i.qty,0); }
   function addCart(id,btn){
     const p=allProducts.find(x=>x.id===id);
     const ex=cart.find(x=>x.id===id);
-    if(ex)ex.qty++;else cart.push({...p,qty:1});
-    sessionStorage.setItem('sm_cart_'+uid,JSON.stringify(cart));
-    updateCount();
+    if(ex)ex.qty++; else cart.push({...p,qty:1});
+    saveCart(); updateCount();
     if(btn){btn.textContent='✓';btn.style.background='#2e7d32';setTimeout(()=>{btn.textContent='담기';btn.style.background='';},900);}
   }
-  function removeCart(id){cart=cart.filter(x=>x.id!==id);sessionStorage.setItem('sm_cart_'+uid,JSON.stringify(cart));updateCount();renderCart();}
-  function changeQty(id,d){const ex=cart.find(x=>x.id===id);if(ex){ex.qty+=d;if(ex.qty<1)removeCart(id);}sessionStorage.setItem('sm_cart_'+uid,JSON.stringify(cart));updateCount();renderCart();}
-  function updateCount(){document.getElementById('cartCount').textContent=cart.reduce((s,i)=>s+i.qty,0);}
+  function removeCart(id){cart=cart.filter(x=>x.id!==id);saveCart();updateCount();renderCart();}
+  function changeQty(id,d){const ex=cart.find(x=>x.id===id);if(ex){ex.qty+=d;if(ex.qty<1)removeCart(id);}saveCart();updateCount();renderCart();}
 
   function renderCart(){
     const el=document.getElementById('cartItems'),tot=document.getElementById('cartTotal');
@@ -266,8 +274,11 @@
     document.getElementById('detailModal').classList.add('show');
   }
   function closeDetail(){document.getElementById('detailModal').classList.remove('show');}
-  function logout(){sessionStorage.clear();location.href='login.html';}
-  updateCount();
+  async function logout(){
+    await window._authFn.signOut(window._auth);
+    sessionStorage.clear();
+    location.href='login.html';
+  }
 </script>
 </body>
 </html>
