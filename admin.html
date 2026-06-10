@@ -235,13 +235,34 @@ waitFB(function() {
       location.href = "index.html";
       return;
     }
+    // 페이지 로드 시 바로 실시간 구독 시작
     loadStats();
     loadCatOptions();
+
+    // 회원수 실시간 — 탭 안 열어도 항상 감지
+    getFS().onSnapshot(getFS().collection(db,"users"), function(snap) {
+      document.getElementById("statUsers").textContent = snap.size;
+      // 회원관리 탭 열려있으면 목록도 업데이트
+      if (document.getElementById("tab-users").classList.contains("show")) {
+        renderUserTable(snap);
+      }
+    });
+
+    // 주문수 실시간
+    getFS().onSnapshot(getFS().collection(db,"orders"), function(snap) {
+      document.getElementById("statOrders").textContent = snap.size;
+      var sales = snap.docs.reduce(function(s,d){return s+(d.data().total||0);},0);
+      document.getElementById("statSales").textContent = sales.toLocaleString();
+    });
+
+    // 상품수 실시간
+    getFS().onSnapshot(getFS().collection(db,"products"), function(snap) {
+      document.getElementById("statProds").textContent = snap.size;
+    });
   });
 });
 
 // ── 대시보드 통계 ─────────────────────────────────────────────────────────────
-// ✅ 수정 (실시간)
 function loadStats() {
   waitFB(function() {
     var fs = getFS(), db = getDB();
@@ -258,7 +279,6 @@ function loadStats() {
     });
   });
 }
-
 
 // ── 카테고리 옵션 (상품 폼용) ─────────────────────────────────────────────────
 function loadCatOptions() {
@@ -433,27 +453,31 @@ function loadOrders() {
 }
 
 // ── 회원 목록 ─────────────────────────────────────────────────────────────────
+function renderUserTable(snap) {
+  var el = document.getElementById("userTable");
+  if (snap.empty) { el.innerHTML='<div class="no-data">회원이 없습니다.</div>'; return; }
+  var html = '<table><tr><th>이메일</th><th>이름</th><th>권한</th><th>가입일</th><th>관리</th></tr>';
+  snap.docs.forEach(function(d) {
+    var u = d.data();
+    var isAdmin = u.role === "admin";
+    html += '<tr>'
+      + '<td>'+u.email+'</td>'
+      + '<td>'+u.name+'</td>'
+      + '<td><span style="background:'+(isAdmin?"#fff8e1":"#f0f4ff")+';color:'+(isAdmin?"#f57f17":"#0f3460")+';padding:2px 7px;border-radius:10px;font-size:11px;">'+(isAdmin?"관리자":"일반회원")+'</span></td>'
+      + '<td style="font-size:11px;color:#888;">'+(u.createdAt||"").substring(0,10)+'</td>'
+      + '<td><button class="del-btn" data-id="'+d.id+'">🗑 삭제</button></td>'
+      + '</tr>';
+  });
+  el.innerHTML = html + '</table>';
+  el.querySelectorAll(".del-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() { delUser(btn.dataset.id); });
+  });
+}
+
 function loadUsers() {
   waitFB(function() {
     getFS().onSnapshot(getFS().collection(getDB(),"users"), function(snap) {
-      var el = document.getElementById("userTable");
-      if (snap.empty) { el.innerHTML='<div class="no-data">회원이 없습니다.</div>'; return; }
-      var html = '<table><tr><th>이메일</th><th>이름</th><th>권한</th><th>가입일</th><th>관리</th></tr>';
-      snap.docs.forEach(function(d) {
-        var u = d.data();
-        var isAdmin = u.role === "admin";
-        html += '<tr>'
-          + '<td>'+u.email+'</td>'
-          + '<td>'+u.name+'</td>'
-          + '<td><span style="background:'+(isAdmin?"#fff8e1":"#f0f4ff")+';color:'+(isAdmin?"#f57f17":"#0f3460")+';padding:2px 7px;border-radius:10px;font-size:11px;">'+(isAdmin?"관리자":"일반회원")+'</span></td>'
-          + '<td style="font-size:11px;color:#888;">'+(u.createdAt||"").substring(0,10)+'</td>'
-          + '<td><button class="del-btn" data-id="'+d.id+'">🗑 삭제</button></td>'
-          + '</tr>';
-      });
-      el.innerHTML = html + '</table>';
-      el.querySelectorAll(".del-btn").forEach(function(btn) {
-        btn.addEventListener("click", function() { delUser(btn.dataset.id); });
-      });
+      renderUserTable(snap);
     });
   });
 }
