@@ -24,9 +24,31 @@
     .msg.ok{background:#e8f5e9;color:#2e7d32;}
     .msg.err{background:#ffebee;color:#c62828;}
     .hidden{display:none;}
+    .loading{text-align:center;padding:10px;color:#888;font-size:13px;}
   </style>
 </head>
 <body>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+  authDomain: "shopmind-21828.firebaseapp.com",
+  projectId: "shopmind-21828",
+  storageBucket: "shopmind-21828.firebasestorage.app",
+  messagingSenderId: "1038832915124",
+  appId: "1:1038832915124:web:7f230b88de063b737b7de1"
+};
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window._db = db;
+    window._fs = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot };
+    window._dbReady = true;
+    document.dispatchEvent(new Event('dbReady'));
+  </script>
 <div class="box">
   <div class="logo"><h1>Shop<span>Mind</span></h1><p style="font-size:13px;color:#999;margin-top:4px;">스마트한 쇼핑의 시작</p></div>
   <div class="tabs">
@@ -47,6 +69,7 @@
   </div>
   <div id="msg"></div>
 </div>
+
 <script>
   function switchTab(t){
     document.getElementById('loginForm').classList.toggle('hidden',t!=='login');
@@ -56,25 +79,46 @@
     showMsg('','');
   }
   function showMsg(txt,type){const el=document.getElementById('msg');el.textContent=txt;el.className='msg '+(txt?type:'');}
-  function signup(){
-    const name=document.getElementById('sname').value.trim(),id=document.getElementById('sid').value.trim(),pw=document.getElementById('spw').value,pw2=document.getElementById('spw2').value;
+
+  function waitDB(fn){ if(window._dbReady) fn(); else document.addEventListener('dbReady',fn,{once:true}); }
+
+  async function signup(){
+    const name=document.getElementById('sname').value.trim();
+    const id=document.getElementById('sid').value.trim();
+    const pw=document.getElementById('spw').value;
+    const pw2=document.getElementById('spw2').value;
     if(!name||!id||!pw||!pw2)return showMsg('모든 항목을 입력해주세요.','err');
     if(id.length<4)return showMsg('아이디는 4자 이상이어야 합니다.','err');
     if(pw.length<6)return showMsg('비밀번호는 6자 이상이어야 합니다.','err');
     if(pw!==pw2)return showMsg('비밀번호가 일치하지 않습니다.','err');
-    const users=JSON.parse(localStorage.getItem('sm_users')||'{}');
-    if(users[id])return showMsg('이미 존재하는 아이디입니다.','err');
-    users[id]={name,pw};localStorage.setItem('sm_users',JSON.stringify(users));
-    showMsg('✅ 회원가입 완료! 로그인해주세요.','ok');switchTab('login');
+    showMsg('처리 중...','ok');
+    waitDB(async()=>{
+      const {doc,getDoc,setDoc}=window._fs, db=window._db;
+      const ref=doc(db,'users',id);
+      const snap=await getDoc(ref);
+      if(snap.exists())return showMsg('이미 존재하는 아이디입니다.','err');
+      await setDoc(ref,{name,pw,createdAt:new Date().toISOString()});
+      showMsg('✅ 회원가입 완료! 로그인해주세요.','ok');
+      switchTab('login');
+    });
   }
-  function login(){
-    const id=document.getElementById('lid').value.trim(),pw=document.getElementById('lpw').value;
+
+  async function login(){
+    const id=document.getElementById('lid').value.trim();
+    const pw=document.getElementById('lpw').value;
     if(!id||!pw)return showMsg('아이디와 비밀번호를 입력해주세요.','err');
-    const users=JSON.parse(localStorage.getItem('sm_users')||'{}');
-    if(!users[id]||users[id].pw!==pw)return showMsg('아이디 또는 비밀번호가 틀렸습니다.','err');
-    localStorage.setItem('sm_loggedIn',id);window.location.href='index.html';
+    showMsg('로그인 중...','ok');
+    waitDB(async()=>{
+      const {doc,getDoc}=window._fs, db=window._db;
+      const snap=await getDoc(doc(db,'users',id));
+      if(!snap.exists()||snap.data().pw!==pw)return showMsg('아이디 또는 비밀번호가 틀렸습니다.','err');
+      sessionStorage.setItem('sm_uid',id);
+      sessionStorage.setItem('sm_name',snap.data().name);
+      location.href='index.html';
+    });
   }
-  window.onload=()=>{if(localStorage.getItem('sm_loggedIn'))window.location.href='index.html';};
+
+  window.onload=()=>{ if(sessionStorage.getItem('sm_uid')) location.href='index.html'; };
 </script>
 </body>
 </html>

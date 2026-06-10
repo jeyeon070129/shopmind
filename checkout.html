@@ -10,7 +10,6 @@
     nav{background:#0f3460;color:#fff;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:62px;}
     .logo{font-size:22px;font-weight:800;cursor:pointer;}.logo span{color:#e94560;}
     .back-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:7px 16px;border-radius:20px;cursor:pointer;font-size:13px;}
-    .back-btn:hover{border-color:#fff;color:#fff;}
     .wrap{max-width:960px;margin:36px auto;padding:0 20px;display:grid;grid-template-columns:1fr 360px;gap:24px;}
     @media(max-width:700px){.wrap{grid-template-columns:1fr;}}
     .card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:20px;}
@@ -18,17 +17,15 @@
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
     .form-group{margin-bottom:14px;}
     label{display:block;margin-bottom:5px;font-size:13px;color:#555;font-weight:600;}
-    input,select,textarea{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;transition:.2s;}
-    input:focus,select:focus,textarea:focus{border-color:#0f3460;}
+    input,select,textarea{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;}
+    input:focus,select:focus{border-color:#0f3460;}
     textarea{resize:none;height:70px;}
-    /* 결제수단 */
     .pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;}
     .pay-card{border:2px solid #ddd;border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:.2s;}
     .pay-card:hover{border-color:#0f3460;}
     .pay-card.selected{border-color:#0f3460;background:#eef2ff;}
     .pay-card .pay-icon{font-size:28px;margin-bottom:6px;}
     .pay-card .pay-name{font-size:12px;font-weight:700;color:#333;}
-    /* 주문 요약 */
     .order-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0f0f0;}
     .order-emoji{font-size:28px;}
     .order-info{flex:1;}
@@ -38,17 +35,36 @@
     .summary-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;}
     .summary-row.total{font-size:18px;font-weight:800;color:#0f3460;border-top:2px solid #eee;margin-top:8px;padding-top:14px;}
     .pay-btn{width:100%;padding:16px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;margin-top:16px;}
-    .pay-btn:hover{opacity:.9;}
-    /* 완료 화면 */
-    .done-screen{display:none;text-align:center;padding:50px 20px;}
+    .done-screen{display:none;text-align:center;padding:60px 20px;max-width:500px;margin:0 auto;}
     .done-screen.show{display:block;}
     .done-icon{font-size:80px;margin-bottom:20px;}
     .done-title{font-size:26px;font-weight:800;color:#0f3460;margin-bottom:10px;}
-    .done-sub{color:#666;margin-bottom:30px;line-height:1.6;}
+    .done-sub{color:#666;margin-bottom:30px;line-height:1.8;}
     .done-btn{background:#0f3460;color:#fff;border:none;padding:13px 32px;border-radius:25px;font-size:15px;font-weight:700;cursor:pointer;}
   </style>
 </head>
 <body>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+  authDomain: "shopmind-21828.firebaseapp.com",
+  projectId: "shopmind-21828",
+  storageBucket: "shopmind-21828.firebasestorage.app",
+  messagingSenderId: "1038832915124",
+  appId: "1:1038832915124:web:7f230b88de063b737b7de1"
+};
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window._db = db;
+    window._fs = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot };
+    window._dbReady = true;
+    document.dispatchEvent(new Event('dbReady'));
+  </script>
 <nav>
   <div class="logo" onclick="location.href='index.html'">Shop<span>Mind</span></div>
   <button class="back-btn" onclick="location.href='index.html'">← 쇼핑 계속하기</button>
@@ -56,13 +72,11 @@
 
 <div id="mainSection">
 <div class="wrap">
-  <!-- 왼쪽: 입력 폼 -->
   <div>
-    <!-- 배송지 -->
     <div class="card">
       <h3>📦 배송지 정보</h3>
       <div class="form-row">
-        <div class="form-group"><label>수령인 이름</label><input id="rname" placeholder="이름 입력"/></div>
+        <div class="form-group"><label>수령인 이름</label><input id="rname" placeholder="이름"/></div>
         <div class="form-group"><label>연락처</label><input id="rphone" placeholder="010-0000-0000"/></div>
       </div>
       <div class="form-group" style="display:flex;gap:10px;margin-bottom:10px;">
@@ -70,14 +84,9 @@
         <button onclick="alert('실제 서비스에서는 카카오 주소 API를 연동합니다.')" style="padding:11px 16px;background:#f0f0f0;border:1.5px solid #ddd;border-radius:9px;cursor:pointer;font-size:13px;white-space:nowrap;">주소 검색</button>
       </div>
       <div class="form-group"><input id="raddr1" placeholder="기본 주소"/></div>
-      <div class="form-group"><input id="raddr2" placeholder="상세 주소 (동/호수)"/></div>
-      <div class="form-group">
-        <label>배송 요청사항</label>
-        <textarea id="rreq" placeholder="예: 문 앞에 놓아주세요"></textarea>
-      </div>
+      <div class="form-group"><input id="raddr2" placeholder="상세 주소"/></div>
+      <div class="form-group"><label>배송 요청사항</label><textarea id="rreq" placeholder="예: 문 앞에 놓아주세요"></textarea></div>
     </div>
-
-    <!-- 결제수단 -->
     <div class="card">
       <h3>💳 결제 수단</h3>
       <div class="pay-methods">
@@ -88,8 +97,6 @@
         <div class="pay-card" onclick="selectPay(this,'무통장입금')"><div class="pay-icon">🏦</div><div class="pay-name">무통장입금</div></div>
         <div class="pay-card" onclick="selectPay(this,'휴대폰결제')"><div class="pay-icon">📱</div><div class="pay-name">휴대폰결제</div></div>
       </div>
-
-      <!-- 카드 상세 -->
       <div id="cardDetail" style="margin-top:16px;">
         <div class="form-row">
           <div class="form-group"><label>카드 번호</label><input id="cardNo" placeholder="0000-0000-0000-0000" maxlength="19" oninput="fmtCard(this)"/></div>
@@ -99,26 +106,17 @@
           <div class="form-group"><label>유효기간</label><input id="cardExp" placeholder="MM/YY" maxlength="5" oninput="fmtExp(this)"/></div>
           <div class="form-group"><label>CVC</label><input id="cardCvc" placeholder="000" maxlength="3" type="password"/></div>
         </div>
-        <div class="form-group">
-          <label>할부</label>
-          <select id="cardInst">
-            <option>일시불</option><option>2개월</option><option>3개월</option>
-            <option>6개월</option><option>12개월</option>
-          </select>
+        <div class="form-group"><label>할부</label>
+          <select id="cardInst"><option>일시불</option><option>2개월</option><option>3개월</option><option>6개월</option><option>12개월</option></select>
         </div>
       </div>
-
-      <!-- 무통장 안내 -->
       <div id="bankDetail" style="display:none;margin-top:16px;padding:16px;background:#f8f9fa;border-radius:10px;">
         <p style="font-size:14px;font-weight:700;color:#0f3460;margin-bottom:8px;">입금 계좌 안내</p>
-        <p style="font-size:13px;color:#555;">국민은행 123-456-789012</p>
-        <p style="font-size:13px;color:#555;">예금주: (주)ShopMind</p>
+        <p style="font-size:13px;color:#555;">국민은행 123-456-789012 · 예금주: (주)ShopMind</p>
         <p style="font-size:12px;color:#e94560;margin-top:8px;">※ 주문 후 24시간 이내 미입금 시 자동 취소됩니다.</p>
       </div>
     </div>
   </div>
-
-  <!-- 오른쪽: 주문 요약 -->
   <div>
     <div class="card" style="position:sticky;top:20px;">
       <h3>🧾 주문 요약</h3>
@@ -134,7 +132,6 @@
 </div>
 </div>
 
-<!-- 완료 화면 -->
 <div id="doneScreen" class="done-screen">
   <div class="done-icon">🎉</div>
   <div class="done-title">주문이 완료되었습니다!</div>
@@ -143,11 +140,10 @@
 </div>
 
 <script>
-  const uid=localStorage.getItem('sm_loggedIn');
+  const uid=sessionStorage.getItem('sm_uid');
   if(!uid)location.href='login.html';
-  let cart=JSON.parse(localStorage.getItem('sm_cart_'+uid)||'[]');
+  let cart=JSON.parse(sessionStorage.getItem('sm_cart_'+uid)||'[]');
   if(!cart.length)location.href='index.html';
-
   let selPay='카드결제';
 
   function selectPay(el,name){
@@ -157,19 +153,14 @@
     document.getElementById('cardDetail').style.display=name==='카드결제'?'block':'none';
     document.getElementById('bankDetail').style.display=name==='무통장입금'?'block':'none';
   }
-
   function fmtCard(el){let v=el.value.replace(/\D/g,'').substring(0,16);el.value=v.replace(/(\d{4})/g,'$1-').replace(/-$/,'');}
   function fmtExp(el){let v=el.value.replace(/\D/g,'').substring(0,4);if(v.length>=3)v=v.substring(0,2)+'/'+v.substring(2);el.value=v;}
 
   function renderOrder(){
-    const list=document.getElementById('orderList');
-    list.innerHTML=cart.map(i=>`
+    document.getElementById('orderList').innerHTML=cart.map(i=>`
       <div class="order-item">
         <div class="order-emoji">${i.emoji}</div>
-        <div class="order-info">
-          <div class="order-name">${i.name}</div>
-          <div class="order-qty">수량: ${i.qty}개</div>
-        </div>
+        <div class="order-info"><div class="order-name">${i.name}</div><div class="order-qty">수량: ${i.qty}개</div></div>
         <div class="order-price">₩${(i.price*i.qty).toLocaleString()}</div>
       </div>`).join('');
     const sub=cart.reduce((s,i)=>s+i.price*i.qty,0);
@@ -179,7 +170,9 @@
     document.getElementById('sumTotal').textContent='₩'+(sub+ship).toLocaleString();
   }
 
-  function pay(){
+  function waitDB(fn){ if(window._dbReady) fn(); else document.addEventListener('dbReady',fn,{once:true}); }
+
+  async function pay(){
     const name=document.getElementById('rname').value.trim();
     const phone=document.getElementById('rphone').value.trim();
     const addr=document.getElementById('raddr1').value.trim();
@@ -192,20 +185,25 @@
     }
     const sub=cart.reduce((s,i)=>s+i.price*i.qty,0);
     const ship=sub>=50000?0:3000;
-    const total=(sub+ship).toLocaleString();
+    const total=sub+ship;
     const orderNo='ORD-'+Date.now().toString().slice(-8);
-    // 주문 저장
-    const orders=JSON.parse(localStorage.getItem('sm_orders_'+uid)||'[]');
-    orders.unshift({orderNo,items:[...cart],address:addr,pay:selPay,total:sub+ship,date:new Date().toLocaleString()});
-    localStorage.setItem('sm_orders_'+uid,JSON.stringify(orders));
-    localStorage.removeItem('sm_cart_'+uid);
-    // 완료 화면
-    document.getElementById('mainSection').style.display='none';
-    const done=document.getElementById('doneScreen');
-    done.classList.add('show');
-    document.getElementById('doneMsg').innerHTML=`주문번호: <b>${orderNo}</b><br/>결제수단: ${selPay}<br/>결제금액: ₩${total}<br/>배송지: ${addr}<br/><br/>주문해주셔서 감사합니다! 🙏`;
-  }
 
+    waitDB(async()=>{
+      const {collection,addDoc}=window._fs, db=window._db;
+      await addDoc(collection(db,'orders'),{
+        orderNo, uid,
+        items: cart.map(i=>({name:i.name,emoji:i.emoji,price:i.price,qty:i.qty})),
+        address: addr, pay: selPay, total,
+        date: new Date().toLocaleString('ko-KR')
+      });
+      sessionStorage.removeItem('sm_cart_'+uid);
+      document.getElementById('mainSection').style.display='none';
+      const done=document.getElementById('doneScreen');
+      done.classList.add('show');
+      document.getElementById('doneMsg').innerHTML=
+        `주문번호: <b>${orderNo}</b><br/>결제수단: ${selPay}<br/>결제금액: ₩${total.toLocaleString()}<br/>배송지: ${addr}<br/><br/>주문해주셔서 감사합니다! 🙏`;
+    });
+  }
   renderOrder();
 </script>
 </body>

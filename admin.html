@@ -10,60 +10,69 @@
     nav{background:#0f3460;color:#fff;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:62px;}
     .logo{font-size:22px;font-weight:800;cursor:pointer;}.logo span{color:#e94560;}
     .back-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:7px 16px;border-radius:20px;cursor:pointer;font-size:13px;}
-    .back-btn:hover{border-color:#fff;color:#fff;}
     .wrap{max-width:1000px;margin:36px auto;padding:0 20px;}
-    /* 탭 */
     .tab-nav{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
-    .tab-nav button{padding:10px 22px;border:2px solid #ddd;border-radius:25px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;transition:.2s;}
+    .tab-nav button{padding:10px 22px;border:2px solid #ddd;border-radius:25px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;}
     .tab-nav button.active{background:#0f3460;color:#fff;border-color:#0f3460;}
     .tab-content{display:none;}.tab-content.show{display:block;}
-    /* 통계 */
     .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:8px;}
     .stat-card{background:#fff;border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.07);}
     .stat-icon{font-size:32px;margin-bottom:8px;}
     .stat-val{font-size:24px;font-weight:800;color:#0f3460;}
     .stat-label{font-size:12px;color:#888;margin-top:4px;}
-    /* 카드 */
     .card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.07);margin-bottom:24px;}
     .card h3{font-size:17px;font-weight:800;color:#0f3460;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;}
-    /* 테이블 */
     table{width:100%;border-collapse:collapse;}
     th{background:#f0f4ff;padding:11px 14px;text-align:left;font-size:13px;color:#555;font-weight:700;}
     td{padding:11px 14px;border-bottom:1px solid #f0f0f0;font-size:13px;vertical-align:middle;}
     .del-btn{background:#ffebee;color:#c62828;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;}
     .del-btn:hover{background:#c62828;color:#fff;}
-    /* 상품 추가 폼 */
     .prod-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
     .prod-form .full{grid-column:1/-1;}
-    .prod-form input,.prod-form select,.prod-form textarea{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;transition:.2s;}
-    .prod-form input:focus,.prod-form select:focus,.prod-form textarea:focus{border-color:#0f3460;}
+    .prod-form input,.prod-form select,.prod-form textarea{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;}
+    .prod-form input:focus,.prod-form select:focus{border-color:#0f3460;}
     .prod-form textarea{resize:none;height:72px;}
     .submit-btn{grid-column:1/-1;padding:13px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
-    .submit-btn:hover{opacity:.9;}
-    /* 상품 목록 테이블 이모지 */
-    .prod-emoji{font-size:26px;}
-    /* 공지 */
-    .notice-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #eee;}
-    .notice-text{font-size:14px;color:#333;}
-    .no-data{text-align:center;padding:28px;color:#aaa;font-size:14px;}
-    /* 미리보기 */
     .preview-box{background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:16px;display:none;}
     .preview-box.show{display:flex;align-items:center;gap:16px;}
     .preview-emoji{font-size:48px;}
     .preview-info .name{font-size:16px;font-weight:700;color:#0f3460;}
     .preview-info .price{font-size:15px;color:#e94560;font-weight:700;}
-    .preview-info .cat{font-size:12px;background:#e8f4fd;color:#0f3460;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:4px;}
+    .preview-info .cat-tag{font-size:12px;background:#e8f4fd;color:#0f3460;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:4px;}
     .msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
     .msg.ok{background:#e8f5e9;color:#2e7d32;display:block;}
     .msg.err{background:#ffebee;color:#c62828;display:block;}
+    .notice-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #eee;}
+    .no-data{text-align:center;padding:28px;color:#aaa;font-size:14px;}
+    .badge.done{background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;}
   </style>
 </head>
 <body>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+  authDomain: "shopmind-21828.firebaseapp.com",
+  projectId: "shopmind-21828",
+  storageBucket: "shopmind-21828.firebasestorage.app",
+  messagingSenderId: "1038832915124",
+  appId: "1:1038832915124:web:7f230b88de063b737b7de1"
+};
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window._db = db;
+    window._fs = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, onSnapshot };
+    window._dbReady = true;
+    document.dispatchEvent(new Event('dbReady'));
+  </script>
 <nav>
-  <div class="logo" onclick="location.href='index.html'">Shop<span>Mind</span> <span style="font-size:13px;color:#f39c12;font-weight:600;">관리자</span></div>
+  <div class="logo" onclick="location.href='index.html'">Shop<span>Mind</span> <span style="font-size:13px;color:#f39c12;">관리자</span></div>
   <button class="back-btn" onclick="location.href='index.html'">← 스토어로</button>
 </nav>
-
 <div class="wrap">
   <div class="tab-nav">
     <button class="active" onclick="switchTab('dashboard')">📊 대시보드</button>
@@ -76,80 +85,48 @@
   <!-- 대시보드 -->
   <div class="tab-content show" id="tab-dashboard">
     <div class="stats">
-      <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-val" id="statProds">0</div><div class="stat-label">등록 상품수</div></div>
-      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-val" id="statUsers">0</div><div class="stat-label">총 회원수</div></div>
-      <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-val" id="statOrders">0</div><div class="stat-label">총 주문수</div></div>
-      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val" id="statSales">0</div><div class="stat-label">총 매출(원)</div></div>
+      <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-val" id="statProds">-</div><div class="stat-label">등록 상품수</div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-val" id="statUsers">-</div><div class="stat-label">총 회원수</div></div>
+      <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-val" id="statOrders">-</div><div class="stat-label">총 주문수</div></div>
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val" id="statSales">-</div><div class="stat-label">총 매출(원)</div></div>
     </div>
   </div>
 
   <!-- 상품 관리 -->
   <div class="tab-content" id="tab-products">
-
-    <!-- 상품 추가 폼 -->
     <div class="card">
       <h3>➕ 상품 추가</h3>
       <div id="prodMsg" class="msg"></div>
-
-      <!-- 미리보기 -->
       <div class="preview-box" id="previewBox">
         <div class="preview-emoji" id="pvEmoji">🎁</div>
         <div class="preview-info">
-          <div class="cat" id="pvCat">카테고리</div>
+          <div class="cat-tag" id="pvCat">카테고리</div>
           <div class="name" id="pvName">상품명</div>
           <div class="price" id="pvPrice">₩0</div>
         </div>
       </div>
-
       <div class="prod-form">
-        <div>
-          <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품명 *</label>
-          <input id="pName" placeholder="예: 무선 이어폰" oninput="updatePreview()"/>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품명 *</label><input id="pName" placeholder="예: 무선 이어폰" oninput="updatePreview()"/></div>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">가격 (원) *</label><input id="pPrice" type="number" placeholder="예: 59000" oninput="updatePreview()"/></div>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">카테고리 *</label>
+          <select id="pCat" onchange="updatePreview()"><option value="">선택</option><option>전자기기</option><option>패션</option><option>생활용품</option><option>식품</option></select>
         </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">가격 (원) *</label>
-          <input id="pPrice" type="number" placeholder="예: 59000" oninput="updatePreview()"/>
-        </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">카테고리 *</label>
-          <select id="pCat" onchange="updatePreview()">
-            <option value="">선택</option>
-            <option>전자기기</option><option>패션</option><option>생활용품</option><option>식품</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">이모지 (상품 아이콘) *</label>
-          <input id="pEmoji" placeholder="예: 🎧" maxlength="4" oninput="updatePreview()"/>
-        </div>
-        <div class="full">
-          <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품 설명 *</label>
-          <textarea id="pDesc" placeholder="상품에 대한 설명을 입력하세요."></textarea>
-        </div>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">이모지 *</label><input id="pEmoji" placeholder="예: 🎧" maxlength="4" oninput="updatePreview()"/></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:5px;">상품 설명 *</label><textarea id="pDesc" placeholder="상품 설명을 입력하세요."></textarea></div>
         <button class="submit-btn" onclick="addProduct()">✅ 상품 등록하기</button>
       </div>
     </div>
-
-    <!-- 상품 목록 -->
-    <div class="card">
-      <h3>📋 등록된 상품 목록</h3>
-      <div id="productTable"></div>
-    </div>
+    <div class="card"><h3>📋 등록된 상품 목록</h3><div id="productTable"><div class="no-data">로딩 중...</div></div></div>
   </div>
 
   <!-- 주문 내역 -->
   <div class="tab-content" id="tab-orders">
-    <div class="card">
-      <h3>🧾 전체 주문 내역</h3>
-      <div id="orderTable"></div>
-    </div>
+    <div class="card"><h3>🧾 전체 주문 내역</h3><div id="orderTable"><div class="no-data">로딩 중...</div></div></div>
   </div>
 
   <!-- 회원 관리 -->
   <div class="tab-content" id="tab-users">
-    <div class="card">
-      <h3>👥 회원 목록</h3>
-      <div id="userTable"></div>
-    </div>
+    <div class="card"><h3>👥 회원 목록</h3><div id="userTable"><div class="no-data">로딩 중...</div></div></div>
   </div>
 
   <!-- 공지사항 -->
@@ -166,184 +143,165 @@
 </div>
 
 <script>
-  const uid = localStorage.getItem('sm_loggedIn');
-  if(uid !== 'admin'){alert('관리자만 접근 가능합니다.');location.href='index.html';}
+  const uid=sessionStorage.getItem('sm_uid');
+  if(uid!=='admin'){alert('관리자만 접근 가능합니다.');location.href='index.html';}
 
-  const DEFAULT_PRODUCTS = [
-    {id:1,name:'에어팟 프로',desc:'액티브 노이즈 캔슬링과 투명 모드를 탑재한 프리미엄 무선 이어폰.',price:189000,emoji:'🎧',cat:'전자기기'},
-    {id:2,name:'스마트워치 Pro',desc:'심박수, 혈중산소, GPS 탑재 올인원 스마트워치.',price:259000,emoji:'⌚',cat:'전자기기'},
-    {id:3,name:'무선 블루투스 키보드',desc:'슬림 디자인의 블루투스 키보드. 3대 멀티페어링.',price:79000,emoji:'⌨️',cat:'전자기기'},
-    {id:4,name:'프리미엄 캐시미어 니트',desc:'부드럽고 따뜻한 100% 캐시미어 소재.',price:128000,emoji:'🧥',cat:'패션'},
-    {id:5,name:'레더 크로스백',desc:'고급 인조가죽 소재의 미니 크로스백.',price:65000,emoji:'👜',cat:'패션'},
-    {id:6,name:'공기청정기 미니',desc:'조용하고 강력한 헤파필터 공기청정기.',price:95000,emoji:'💨',cat:'생활용품'},
-    {id:7,name:'유기농 그래놀라',desc:'설탕 무첨가 100% 유기농 그래놀라.',price:18000,emoji:'🥣',cat:'식품'},
-    {id:8,name:'콜드브루 커피 세트',desc:'진하고 부드러운 콜드브루 10팩 세트.',price:24000,emoji:'☕',cat:'식품'},
-    {id:9,name:'LED 스탠드 조명',desc:'눈부심 없는 3단 밝기 조절 LED 스탠드.',price:45000,emoji:'💡',cat:'생활용품'},
-    {id:10,name:'러닝화 에어쿠션',desc:'충격흡수 에어쿠션 밑창. 통기성 좋은 러닝화.',price:89000,emoji:'👟',cat:'패션'},
-  ];
-  if(!localStorage.getItem('sm_products')) localStorage.setItem('sm_products', JSON.stringify(DEFAULT_PRODUCTS));
-
-  function getProds(){return JSON.parse(localStorage.getItem('sm_products')||'[]');}
-  function saveProds(p){localStorage.setItem('sm_products',JSON.stringify(p));}
-
-  // 탭 전환
+  function waitDB(fn){ if(window._dbReady) fn(); else document.addEventListener('dbReady',fn,{once:true}); }
   function switchTab(t){
-    document.querySelectorAll('.tab-nav button').forEach((b,i)=>{
-      const ids=['dashboard','products','orders','users','notice'];
-      b.classList.toggle('active', ids[i]===t);
-    });
+    const ids=['dashboard','products','orders','users','notice'];
+    document.querySelectorAll('.tab-nav button').forEach((b,i)=>b.classList.toggle('active',ids[i]===t));
     document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('show'));
     document.getElementById('tab-'+t).classList.add('show');
-    if(t==='products')renderProductTable();
-    if(t==='orders')renderOrders();
-    if(t==='users')renderUsers();
-    if(t==='notice')renderNotices();
-    if(t==='dashboard')renderStats();
+    if(t==='dashboard')loadStats();
+    if(t==='products')loadProducts();
+    if(t==='orders')loadOrders();
+    if(t==='users')loadUsers();
+    if(t==='notice')loadNotices();
   }
 
-  // 통계
-  function renderStats(){
-    const users=JSON.parse(localStorage.getItem('sm_users')||'{}');
-    const allOrders=Object.keys(users).flatMap(u=>JSON.parse(localStorage.getItem('sm_orders_'+u)||'[]'));
-    document.getElementById('statProds').textContent=getProds().length;
-    document.getElementById('statUsers').textContent=Object.keys(users).length;
-    document.getElementById('statOrders').textContent=allOrders.length;
-    document.getElementById('statSales').textContent=allOrders.reduce((s,o)=>s+o.total,0).toLocaleString();
-  }
-
-  // 미리보기
   function updatePreview(){
-    const name=document.getElementById('pName').value||'상품명';
-    const price=parseInt(document.getElementById('pPrice').value)||0;
-    const cat=document.getElementById('pCat').value||'카테고리';
-    const emoji=document.getElementById('pEmoji').value||'🎁';
-    document.getElementById('pvEmoji').textContent=emoji;
-    document.getElementById('pvName').textContent=name;
-    document.getElementById('pvPrice').textContent='₩'+price.toLocaleString();
-    document.getElementById('pvCat').textContent=cat;
+    document.getElementById('pvEmoji').textContent=document.getElementById('pEmoji').value||'🎁';
+    document.getElementById('pvName').textContent=document.getElementById('pName').value||'상품명';
+    document.getElementById('pvPrice').textContent='₩'+(parseInt(document.getElementById('pPrice').value)||0).toLocaleString();
+    document.getElementById('pvCat').textContent=document.getElementById('pCat').value||'카테고리';
     document.getElementById('previewBox').classList.add('show');
   }
 
-  // 상품 추가
-  function addProduct(){
+  async function addProduct(){
     const name=document.getElementById('pName').value.trim();
     const price=parseInt(document.getElementById('pPrice').value);
     const cat=document.getElementById('pCat').value;
     const emoji=document.getElementById('pEmoji').value.trim();
     const desc=document.getElementById('pDesc').value.trim();
     const msg=document.getElementById('prodMsg');
-    msg.className='msg';
-
-    if(!name||!price||!cat||!emoji||!desc){
-      msg.textContent='❌ 모든 항목을 입력해주세요.';msg.className='msg err';return;
-    }
-    const prods=getProds();
-    const newId=prods.length ? Math.max(...prods.map(p=>p.id))+1 : 1;
-    prods.push({id:newId,name,price,cat,emoji,desc});
-    saveProds(prods);
-    msg.textContent='✅ 상품이 등록되었습니다!';msg.className='msg ok';
-    document.getElementById('pName').value='';
-    document.getElementById('pPrice').value='';
-    document.getElementById('pCat').value='';
-    document.getElementById('pEmoji').value='';
-    document.getElementById('pDesc').value='';
-    document.getElementById('previewBox').classList.remove('show');
-    renderProductTable();
-    setTimeout(()=>{msg.className='msg';},3000);
+    if(!name||!price||!cat||!emoji||!desc){msg.textContent='❌ 모든 항목을 입력해주세요.';msg.className='msg err';return;}
+    waitDB(async()=>{
+      const {collection,addDoc}=window._fs;
+      await addDoc(collection(window._db,'products'),{name,price,cat,emoji,desc});
+      msg.textContent='✅ 상품이 등록되었습니다!';msg.className='msg ok';
+      ['pName','pPrice','pEmoji','pDesc'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('pCat').value='';
+      document.getElementById('previewBox').classList.remove('show');
+      loadProducts();
+      setTimeout(()=>{msg.className='msg';},3000);
+    });
   }
 
-  // 상품 삭제
-  function delProduct(id){
-    if(!confirm('정말 이 상품을 삭제하시겠습니까?'))return;
-    saveProds(getProds().filter(p=>p.id!==id));
-    renderProductTable();
-  }
-
-  // 상품 테이블
-  function renderProductTable(){
-    const prods=getProds();
-    const el=document.getElementById('productTable');
-    if(!prods.length){el.innerHTML='<div class="no-data">등록된 상품이 없습니다.</div>';return;}
-    el.innerHTML=`<table>
-      <tr><th>아이콘</th><th>상품명</th><th>카테고리</th><th>가격</th><th>설명</th><th>삭제</th></tr>
-      ${prods.map(p=>`<tr>
-        <td class="prod-emoji">${p.emoji}</td>
+  function loadProducts(){
+    waitDB(async()=>{
+      const {collection,getDocs}=window._fs;
+      const snap=await getDocs(collection(window._db,'products'));
+      const el=document.getElementById('productTable');
+      if(snap.empty){el.innerHTML='<div class="no-data">등록된 상품이 없습니다.</div>';return;}
+      el.innerHTML=`<table><tr><th>아이콘</th><th>상품명</th><th>카테고리</th><th>가격</th><th>설명</th><th>삭제</th></tr>
+      ${snap.docs.map(d=>{const p=d.data();return`<tr>
+        <td style="font-size:26px;">${p.emoji}</td>
         <td><b>${p.name}</b></td>
         <td><span style="background:#e8f4fd;color:#0f3460;padding:2px 8px;border-radius:10px;font-size:12px;">${p.cat}</span></td>
         <td style="color:#e94560;font-weight:700;">₩${p.price.toLocaleString()}</td>
-        <td style="color:#888;max-width:200px;">${p.desc.substring(0,40)}...</td>
-        <td><button class="del-btn" onclick="delProduct(${p.id})">🗑 삭제</button></td>
-      </tr>`).join('')}
-    </table>`;
+        <td style="color:#888;">${p.desc.substring(0,30)}...</td>
+        <td><button class="del-btn" onclick="delProduct('${d.id}')">🗑 삭제</button></td>
+      </tr>`;}).join('')}</table>`;
+    });
   }
 
-  // 주문 내역
-  function renderOrders(){
-    const users=JSON.parse(localStorage.getItem('sm_users')||'{}');
-    const allOrders=Object.keys(users).flatMap(u=>
-      JSON.parse(localStorage.getItem('sm_orders_'+u)||'[]').map(o=>({...o,user:u}))
-    );
-    const el=document.getElementById('orderTable');
-    if(!allOrders.length){el.innerHTML='<div class="no-data">주문 내역이 없습니다.</div>';return;}
-    el.innerHTML=`<table>
-      <tr><th>주문번호</th><th>회원</th><th>상품</th><th>결제수단</th><th>금액</th><th>날짜</th></tr>
-      ${allOrders.map(o=>`<tr>
+  async function delProduct(id){
+    if(!confirm('정말 삭제하시겠습니까?'))return;
+    waitDB(async()=>{
+      const {doc,deleteDoc}=window._fs;
+      await deleteDoc(doc(window._db,'products',id));
+      loadProducts();loadStats();
+    });
+  }
+
+  function loadOrders(){
+    waitDB(async()=>{
+      const {collection,getDocs}=window._fs;
+      const snap=await getDocs(collection(window._db,'orders'));
+      const el=document.getElementById('orderTable');
+      if(snap.empty){el.innerHTML='<div class="no-data">주문 내역이 없습니다.</div>';return;}
+      el.innerHTML=`<table><tr><th>주문번호</th><th>회원</th><th>상품</th><th>결제수단</th><th>금액</th><th>날짜</th></tr>
+      ${snap.docs.map(d=>{const o=d.data();return`<tr>
         <td style="font-size:12px;color:#888;">${o.orderNo}</td>
-        <td>${o.user}</td>
+        <td>${o.uid}</td>
         <td>${o.items.map(i=>i.name).join(', ')}</td>
         <td>${o.pay}</td>
         <td style="color:#e94560;font-weight:700;">₩${o.total.toLocaleString()}</td>
         <td style="font-size:12px;color:#888;">${o.date}</td>
-      </tr>`).join('')}
-    </table>`;
+      </tr>`;}).join('')}</table>`;
+    });
   }
 
-  // 회원 목록
-  function renderUsers(){
-    const users=JSON.parse(localStorage.getItem('sm_users')||'{}');
-    const el=document.getElementById('userTable');
-    const keys=Object.keys(users);
-    if(!keys.length){el.innerHTML='<div class="no-data">회원이 없습니다.</div>';return;}
-    el.innerHTML=`<table>
-      <tr><th>아이디</th><th>이름</th><th>주문수</th><th>관리</th></tr>
-      ${keys.map(k=>`<tr>
-        <td>${k}</td><td>${users[k].name}</td>
-        <td>${JSON.parse(localStorage.getItem('sm_orders_'+k)||'[]').length}건</td>
-        <td><button class="del-btn" onclick="delUser('${k}')">🗑 삭제</button></td>
-      </tr>`).join('')}
-    </table>`;
+  function loadUsers(){
+    waitDB(async()=>{
+      const {collection,getDocs,doc,deleteDoc}=window._fs;
+      const snap=await getDocs(collection(window._db,'users'));
+      const el=document.getElementById('userTable');
+      if(snap.empty){el.innerHTML='<div class="no-data">회원이 없습니다.</div>';return;}
+      el.innerHTML=`<table><tr><th>아이디</th><th>이름</th><th>가입일</th><th>관리</th></tr>
+      ${snap.docs.map(d=>{const u=d.data();return`<tr>
+        <td>${d.id}</td><td>${u.name}</td>
+        <td style="font-size:12px;color:#888;">${u.createdAt?u.createdAt.substring(0,10):'-'}</td>
+        <td><button class="del-btn" onclick="delUser('${d.id}')">🗑 삭제</button></td>
+      </tr>`;}).join('')}</table>`;
+    });
   }
 
-  function delUser(k){
-    if(!confirm(k+'님을 삭제하시겠습니까?'))return;
-    const u=JSON.parse(localStorage.getItem('sm_users')||'{}');
-    delete u[k];localStorage.setItem('sm_users',JSON.stringify(u));renderUsers();
+  async function delUser(id){
+    if(!confirm(id+'님을 삭제하시겠습니까?'))return;
+    waitDB(async()=>{
+      const {doc,deleteDoc}=window._fs;
+      await deleteDoc(doc(window._db,'users',id));
+      loadUsers();loadStats();
+    });
   }
 
-  // 공지
-  function renderNotices(){
-    const notices=JSON.parse(localStorage.getItem('sm_notices')||'[]');
-    const el=document.getElementById('noticeList');
-    if(!notices.length){el.innerHTML='<div class="no-data">공지가 없습니다.</div>';return;}
-    el.innerHTML=notices.map((n,i)=>`
-      <div class="notice-item">
-        <span class="notice-text">📢 ${n}</span>
-        <button class="del-btn" onclick="delNotice(${i})">삭제</button>
-      </div>`).join('');
+  function loadStats(){
+    waitDB(async()=>{
+      const {collection,getDocs}=window._fs, db=window._db;
+      const [ps,us,os]=await Promise.all([getDocs(collection(db,'products')),getDocs(collection(db,'users')),getDocs(collection(db,'orders'))]);
+      document.getElementById('statProds').textContent=ps.size;
+      document.getElementById('statUsers').textContent=us.size;
+      document.getElementById('statOrders').textContent=os.size;
+      const sales=os.docs.reduce((s,d)=>s+(d.data().total||0),0);
+      document.getElementById('statSales').textContent=sales.toLocaleString();
+    });
   }
-  function addNotice(){
+
+  function loadNotices(){
+    waitDB(async()=>{
+      const {collection,getDocs,doc,deleteDoc}=window._fs;
+      const snap=await getDocs(collection(window._db,'notices'));
+      const el=document.getElementById('noticeList');
+      if(snap.empty){el.innerHTML='<div class="no-data">공지가 없습니다.</div>';return;}
+      el.innerHTML=snap.docs.map(d=>`
+        <div class="notice-item">
+          <span>📢 ${d.data().text}</span>
+          <button class="del-btn" onclick="delNotice('${d.id}')">삭제</button>
+        </div>`).join('');
+    });
+  }
+
+  async function addNotice(){
     const t=document.getElementById('noticeTitle').value.trim();
     if(!t)return alert('공지 내용을 입력해주세요.');
-    const n=JSON.parse(localStorage.getItem('sm_notices')||'[]');
-    n.unshift(t);localStorage.setItem('sm_notices',JSON.stringify(n));
-    document.getElementById('noticeTitle').value='';renderNotices();
-  }
-  function delNotice(i){
-    const n=JSON.parse(localStorage.getItem('sm_notices')||'[]');
-    n.splice(i,1);localStorage.setItem('sm_notices',JSON.stringify(n));renderNotices();
+    waitDB(async()=>{
+      const {collection,addDoc}=window._fs;
+      await addDoc(collection(window._db,'notices'),{text:t,createdAt:new Date().toISOString()});
+      document.getElementById('noticeTitle').value='';
+      loadNotices();
+    });
   }
 
-  renderStats();
+  async function delNotice(id){
+    waitDB(async()=>{
+      const {doc,deleteDoc}=window._fs;
+      await deleteDoc(doc(window._db,'notices',id));
+      loadNotices();
+    });
+  }
+
+  loadStats();
 </script>
 </body>
 </html>
