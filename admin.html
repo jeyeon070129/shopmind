@@ -145,14 +145,9 @@
           <select id="pCat"><option value="">선택</option></select>
         </div>
         <div></div>
-        <div class="full">
-          <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">상품 이미지 *</label>
-          <div class="img-upload-area" id="uploadArea">
-            <input type="file" id="pImg" accept="image/*"/>
-            <div id="uploadPlaceholder">📷<br/><span style="font-size:13px;color:#888;">클릭하여 사진 선택 (최대 5MB)</span></div>
-            <img id="imgPreview" class="img-preview"/>
-          </div>
-          <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">이모지 (상품 아이콘) *</label>
+          <input id="pEmoji" placeholder="예: 🎧 👟 💻" maxlength="4" style="font-size:22px;"/>
         </div>
         <div class="full">
           <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">상품 설명 *</label>
@@ -329,28 +324,13 @@ function delCategory(id) {
 }
 
 // ── 이미지 미리보기 ───────────────────────────────────────────────────────────
-document.getElementById("pImg").addEventListener("change", function() {
-  var file = this.files[0];
-  if (!file) return;
-  if (file.size > 5*1024*1024) { alert("5MB 이하 이미지만 업로드 가능합니다."); return; }
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = document.getElementById("imgPreview");
-    img.src = e.target.result;
-    img.style.display = "block";
-    document.getElementById("uploadPlaceholder").style.display = "none";
-    document.getElementById("pvThumb").innerHTML = '<img src="' + e.target.result + '"/>';
-    document.getElementById("previewBox").classList.add("show");
-  };
-  reader.readAsDataURL(file);
-});
-
 // 입력할 때마다 미리보기 업데이트
-["pName","pPrice","pCat"].forEach(function(id) {
+["pName","pPrice","pCat","pEmoji"].forEach(function(id) {
   document.getElementById(id).addEventListener("input", function() {
     document.getElementById("pvName").textContent  = document.getElementById("pName").value || "상품명";
     document.getElementById("pvPrice").textContent = "₩" + (parseInt(document.getElementById("pPrice").value)||0).toLocaleString();
     document.getElementById("pvCat").textContent   = document.getElementById("pCat").value || "카테고리";
+    document.getElementById("pvThumb").textContent = document.getElementById("pEmoji").value || "🛍️";
     document.getElementById("previewBox").classList.add("show");
   });
 });
@@ -361,41 +341,28 @@ document.getElementById("submitProdBtn").addEventListener("click", function() {
   var price = parseInt(document.getElementById("pPrice").value);
   var cat   = document.getElementById("pCat").value;
   var desc  = document.getElementById("pDesc").value.trim();
-  var file  = document.getElementById("pImg").files[0];
+  var emoji = document.getElementById("pEmoji").value.trim();
   var msg   = document.getElementById("prodMsg");
 
-  if (!name||!price||!cat||!desc) { msg.textContent="❌ 모든 항목을 입력해주세요."; msg.className="msg err"; return; }
-  if (!file) { msg.textContent="❌ 상품 이미지를 선택해주세요."; msg.className="msg err"; return; }
-
-  msg.textContent="⏳ 이미지 업로드 중..."; msg.className="msg ok";
-  var pw = document.getElementById("progressWrap");
-  var pb = document.getElementById("progressBar");
-  pw.style.display="block"; pb.style.width="30%";
+  if (!name||!price||!cat||!desc||!emoji) {
+    msg.textContent="❌ 모든 항목을 입력해주세요."; msg.className="msg err"; return;
+  }
 
   waitFB(async function() {
     try {
-      var st  = window._stFn;
-      var fs  = getFS();
-      var db  = getDB();
-      var sRef = st.ref(window._storage, "products/" + Date.now() + "_" + file.name);
-      await st.uploadBytes(sRef, file);
-      pb.style.width = "75%";
-      var imageUrl = await st.getDownloadURL(sRef);
-      pb.style.width = "100%";
-      await fs.addDoc(fs.collection(db,"products"),{name:name,price:price,cat:cat,desc:desc,imageUrl:imageUrl,createdAt:new Date().toISOString()});
+      var fs = getFS(), db = getDB();
+      await fs.addDoc(fs.collection(db,"products"),{
+        name:name, price:price, cat:cat, desc:desc,
+        emoji:emoji, imageUrl:"", createdAt:new Date().toISOString()
+      });
       msg.textContent="✅ 상품이 등록되었습니다!"; msg.className="msg ok";
-      ["pName","pPrice","pDesc"].forEach(function(id){document.getElementById(id).value="";});
+      ["pName","pPrice","pDesc","pEmoji"].forEach(function(id){document.getElementById(id).value="";});
       document.getElementById("pCat").value="";
-      document.getElementById("pImg").value="";
-      document.getElementById("imgPreview").style.display="none";
-      document.getElementById("uploadPlaceholder").style.display="block";
       document.getElementById("previewBox").classList.remove("show");
-      pw.style.display="none";
       loadProducts(); loadStats();
       setTimeout(function(){msg.className="msg";},3000);
     } catch(e) {
       msg.textContent="❌ 오류: "+e.message; msg.className="msg err";
-      pw.style.display="none";
     }
   });
 });
