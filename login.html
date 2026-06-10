@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>로그인 - ShopMind</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;display:flex;align-items:center;justify-content:center;}
+    .box{background:#fff;border-radius:20px;padding:44px 40px;width:400px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+    .logo{text-align:center;margin-bottom:28px;}
+    .logo h1{font-size:28px;color:#0f3460;letter-spacing:-1px;}
+    .logo span{color:#e94560;}
+    .tabs{display:flex;border-radius:10px;overflow:hidden;border:1px solid #ddd;margin-bottom:26px;}
+    .tabs button{flex:1;padding:11px;border:none;background:#f5f5f5;cursor:pointer;font-size:14px;font-weight:600;transition:.2s;}
+    .tabs button.active{background:#0f3460;color:#fff;}
+    .form-group{margin-bottom:15px;}
+    label{display:block;margin-bottom:5px;font-size:13px;color:#555;font-weight:600;}
+    input{width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;transition:.2s;}
+    input:focus{border-color:#0f3460;}
+    .btn{width:100%;padding:13px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;}
+    .btn:hover{opacity:.88;}
+    .msg{margin-top:12px;text-align:center;font-size:13px;padding:9px;border-radius:8px;}
+    .msg.ok{background:#e8f5e9;color:#2e7d32;}
+    .msg.err{background:#ffebee;color:#c62828;}
+    .hidden{display:none;}
+  </style>
+</head>
+<body>
+<div class="box">
+  <div class="logo"><h1>Shop<span>Mind</span></h1><p style="font-size:13px;color:#999;margin-top:4px;">스마트한 쇼핑의 시작</p></div>
+  <div class="tabs">
+    <button class="active" onclick="switchTab('login')">로그인</button>
+    <button onclick="switchTab('signup')">회원가입</button>
+  </div>
+  <div id="loginForm">
+    <div class="form-group"><label>아이디</label><input id="lid" placeholder="아이디 입력"/></div>
+    <div class="form-group"><label>비밀번호</label><input type="password" id="lpw" placeholder="비밀번호 입력"/></div>
+    <button class="btn" onclick="login()">로그인</button>
+  </div>
+  <div id="signupForm" class="hidden">
+    <div class="form-group"><label>이름</label><input id="sname" placeholder="이름 입력"/></div>
+    <div class="form-group"><label>아이디</label><input id="sid" placeholder="아이디 (4자 이상)"/></div>
+    <div class="form-group"><label>비밀번호</label><input type="password" id="spw" placeholder="비밀번호 (6자 이상)"/></div>
+    <div class="form-group"><label>비밀번호 확인</label><input type="password" id="spw2" placeholder="비밀번호 재입력"/></div>
+    <button class="btn" onclick="signup()">회원가입</button>
+  </div>
+  <div id="msg"></div>
+</div>
+<script>
+  function switchTab(t){
+    document.getElementById('loginForm').classList.toggle('hidden',t!=='login');
+    document.getElementById('signupForm').classList.toggle('hidden',t!=='signup');
+    document.querySelectorAll('.tabs button')[0].classList.toggle('active',t==='login');
+    document.querySelectorAll('.tabs button')[1].classList.toggle('active',t==='signup');
+    showMsg('','');
+  }
+  function showMsg(txt,type){const el=document.getElementById('msg');el.textContent=txt;el.className='msg '+(txt?type:'');}
+  function signup(){
+    const name=document.getElementById('sname').value.trim(),id=document.getElementById('sid').value.trim(),pw=document.getElementById('spw').value,pw2=document.getElementById('spw2').value;
+    if(!name||!id||!pw||!pw2)return showMsg('모든 항목을 입력해주세요.','err');
+    if(id.length<4)return showMsg('아이디는 4자 이상이어야 합니다.','err');
+    if(pw.length<6)return showMsg('비밀번호는 6자 이상이어야 합니다.','err');
+    if(pw!==pw2)return showMsg('비밀번호가 일치하지 않습니다.','err');
+    const users=JSON.parse(localStorage.getItem('sm_users')||'{}');
+    if(users[id])return showMsg('이미 존재하는 아이디입니다.','err');
+    users[id]={name,pw};localStorage.setItem('sm_users',JSON.stringify(users));
+    showMsg('✅ 회원가입 완료! 로그인해주세요.','ok');switchTab('login');
+  }
+  function login(){
+    const id=document.getElementById('lid').value.trim(),pw=document.getElementById('lpw').value;
+    if(!id||!pw)return showMsg('아이디와 비밀번호를 입력해주세요.','err');
+    const users=JSON.parse(localStorage.getItem('sm_users')||'{}');
+    if(!users[id]||users[id].pw!==pw)return showMsg('아이디 또는 비밀번호가 틀렸습니다.','err');
+    localStorage.setItem('sm_loggedIn',id);window.location.href='index.html';
+  }
+  window.onload=()=>{if(localStorage.getItem('sm_loggedIn'))window.location.href='index.html';};
+</script>
+</body>
+</html>
