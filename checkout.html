@@ -7,75 +7,99 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',sans-serif;background:#f4f6fb;}
-    nav{background:#0f3460;color:#fff;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:62px;}
-    .logo{font-size:22px;font-weight:800;cursor:pointer;}.logo span{color:#e94560;}
-    .back-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:7px 16px;border-radius:20px;cursor:pointer;font-size:13px;}
-    .wrap{max-width:960px;margin:36px auto;padding:0 20px;display:grid;grid-template-columns:1fr 360px;gap:24px;}
+    
+    nav{background:#0f3460;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+    .logo{font-size:22px;font-weight:800;flex-shrink:0;}.logo span{color:#e94560;}
+    .nav-links{display:flex;gap:16px;}
+    .nav-links a{color:#ccc;text-decoration:none;font-size:14px;}
+    .nav-links a:hover{color:#fff;}
+    .nav-right{display:flex;align-items:center;gap:8px;}
+    .user-info{font-size:13px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+    .cart-btn{background:#e94560;border:none;color:#fff;padding:7px 14px;border-radius:20px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap;}
+    .logout-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:12px;white-space:nowrap;}
+    .logout-btn:hover{border-color:#fff;color:#fff;}
+    .admin-btn{background:#f39c12;border:none;color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;}
+    @media(max-width:768px){
+      .nav-links{display:none;}
+      .user-info{max-width:80px;font-size:11px;}
+      .cart-btn{padding:6px 10px;font-size:12px;}
+      .logout-btn{padding:5px 8px;font-size:11px;}
+      .admin-btn{padding:5px 8px;font-size:11px;}
+    }
+    @media(max-width:480px){
+      nav{padding:0 12px;}
+      .user-info{display:none;}
+    }
+
+    .wrap{max-width:960px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:1fr 340px;gap:20px;}
     @media(max-width:700px){.wrap{grid-template-columns:1fr;}}
-    .card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:20px;}
-    .card h3{font-size:18px;font-weight:800;color:#0f3460;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;}
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
-    .form-group{margin-bottom:14px;}
-    label{display:block;margin-bottom:5px;font-size:13px;color:#555;font-weight:600;}
-    input,select,textarea{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;}
+    .card{background:#fff;border-radius:16px;padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:16px;}
+    .card h3{font-size:17px;font-weight:800;color:#0f3460;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+    @media(max-width:480px){.form-row{grid-template-columns:1fr;}}
+    .form-group{margin-bottom:12px;}
+    label{display:block;margin-bottom:4px;font-size:13px;color:#555;font-weight:600;}
+    input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;}
     input:focus,select:focus{border-color:#0f3460;}
-    textarea{resize:none;height:70px;}
-    .pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;}
-    .pay-card{border:2px solid #ddd;border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:.2s;}
+    textarea{resize:none;height:65px;}
+    .pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px;}
+    @media(max-width:480px){.pay-methods{grid-template-columns:repeat(2,1fr);}}
+    .pay-card{border:2px solid #ddd;border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;transition:.2s;}
     .pay-card:hover{border-color:#0f3460;}
     .pay-card.selected{border-color:#0f3460;background:#eef2ff;}
-    .pay-card .pay-icon{font-size:28px;margin-bottom:6px;}
-    .pay-card .pay-name{font-size:12px;font-weight:700;color:#333;}
-    .order-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0f0f0;}
-    .order-emoji{font-size:28px;}
+    .pay-card .pay-icon{font-size:26px;margin-bottom:4px;}
+    .pay-card .pay-name{font-size:11px;font-weight:700;color:#333;}
+    .order-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;}
+    .order-img{width:40px;height:40px;border-radius:8px;background:#f8f8f8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+    .order-img img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
     .order-info{flex:1;}
-    .order-name{font-size:14px;font-weight:600;}
-    .order-qty{font-size:12px;color:#888;}
-    .order-price{font-size:14px;font-weight:700;color:#e94560;}
-    .summary-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;}
-    .summary-row.total{font-size:18px;font-weight:800;color:#0f3460;border-top:2px solid #eee;margin-top:8px;padding-top:14px;}
-    .pay-btn{width:100%;padding:16px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;margin-top:16px;}
-    .done-screen{display:none;text-align:center;padding:60px 20px;max-width:500px;margin:0 auto;}
+    .order-name{font-size:13px;font-weight:600;}
+    .order-qty{font-size:11px;color:#888;}
+    .order-price{font-size:13px;font-weight:700;color:#e94560;}
+    .summary-row{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;color:#555;}
+    .summary-row.total{font-size:17px;font-weight:800;color:#0f3460;border-top:2px solid #eee;margin-top:6px;padding-top:12px;}
+    .pay-btn{width:100%;padding:14px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;}
+    .done-screen{display:none;text-align:center;padding:60px 20px;max-width:460px;margin:0 auto;}
     .done-screen.show{display:block;}
-    .done-icon{font-size:80px;margin-bottom:20px;}
-    .done-title{font-size:26px;font-weight:800;color:#0f3460;margin-bottom:10px;}
-    .done-sub{color:#666;margin-bottom:30px;line-height:1.8;}
-    .done-btn{background:#0f3460;color:#fff;border:none;padding:13px 32px;border-radius:25px;font-size:15px;font-weight:700;cursor:pointer;}
+    .done-icon{font-size:70px;margin-bottom:16px;}
+    .done-title{font-size:24px;font-weight:800;color:#0f3460;margin-bottom:8px;}
+    .done-sub{color:#666;margin-bottom:24px;line-height:1.8;font-size:14px;}
+    .done-btn{background:#0f3460;color:#fff;border:none;padding:12px 28px;border-radius:25px;font-size:14px;font-weight:700;cursor:pointer;}
   </style>
 </head>
 <body>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-    const firebaseConfig = {
+    const app  = initializeApp({
       apiKey: "AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
       authDomain: "shopmind-21828.firebaseapp.com",
       projectId: "shopmind-21828",
       storageBucket: "shopmind-21828.firebasestorage.app",
       messagingSenderId: "1038832915124",
       appId: "1:1038832915124:web:7f230b88de063b737b7de1"
-    };
-
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-
-    window._auth = auth;
-    window._db   = db;
-    window._authFn = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
-    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot };
+    });
+    window._auth    = getAuth(app);
+    window._db      = getFirestore(app);
+    window._storage = getStorage(app);
+    window._authFn  = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+    window._fsFn    = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot };
+    window._stFn    = { ref, uploadBytes, getDownloadURL, deleteObject };
     window._fbReady = true;
     document.dispatchEvent(new Event('fbReady'));
   </script>
 <nav>
-  <div class="logo" onclick="location.href='index.html'">Shop<span>Mind</span></div>
-  <button class="back-btn" onclick="location.href='index.html'">← 쇼핑 계속하기</button>
+  <div class="logo" onclick="location.href='index.html'" style="cursor:pointer">Shop<span>Mind</span></div>
+  <div class="nav-right">
+    <button class="logout-btn" onclick="location.href='index.html'">← 쇼핑계속</button>
+  </div>
 </nav>
 <div id="mainSection">
 <div class="wrap">
@@ -86,11 +110,11 @@
         <div class="form-group"><label>수령인 이름</label><input id="rname" placeholder="이름"/></div>
         <div class="form-group"><label>연락처</label><input id="rphone" placeholder="010-0000-0000"/></div>
       </div>
-      <div class="form-group" style="display:flex;gap:10px;margin-bottom:10px;">
-        <input id="rzip" placeholder="우편번호" style="width:140px"/>
-        <button onclick="alert('실제 서비스에서는 카카오 주소 API를 연동합니다.')" style="padding:11px 16px;background:#f0f0f0;border:1.5px solid #ddd;border-radius:9px;cursor:pointer;font-size:13px;">주소 검색</button>
+      <div class="form-group" style="display:flex;gap:8px;">
+        <input id="rzip" placeholder="우편번호" style="width:130px;flex-shrink:0;"/>
+        <button onclick="alert('실제 서비스에서는 카카오 주소 API를 연동합니다.')" style="padding:10px 14px;background:#f0f0f0;border:1.5px solid #ddd;border-radius:9px;cursor:pointer;font-size:13px;white-space:nowrap;">주소 검색</button>
       </div>
-      <div class="form-group"><input id="raddr1" placeholder="기본 주소"/></div>
+      <div class="form-group" style="margin-top:8px;"><input id="raddr1" placeholder="기본 주소"/></div>
       <div class="form-group"><input id="raddr2" placeholder="상세 주소"/></div>
       <div class="form-group"><label>배송 요청사항</label><textarea id="rreq" placeholder="예: 문 앞에 놓아주세요"></textarea></div>
     </div>
@@ -104,10 +128,10 @@
         <div class="pay-card" onclick="selectPay(this,'무통장입금')"><div class="pay-icon">🏦</div><div class="pay-name">무통장입금</div></div>
         <div class="pay-card" onclick="selectPay(this,'휴대폰결제')"><div class="pay-icon">📱</div><div class="pay-name">휴대폰결제</div></div>
       </div>
-      <div id="cardDetail" style="margin-top:16px;">
+      <div id="cardDetail" style="margin-top:14px;">
         <div class="form-row">
           <div class="form-group"><label>카드 번호</label><input id="cardNo" placeholder="0000-0000-0000-0000" maxlength="19" oninput="fmtCard(this)"/></div>
-          <div class="form-group"><label>카드 소유자명</label><input id="cardName" placeholder="홍길동"/></div>
+          <div class="form-group"><label>소유자명</label><input id="cardName" placeholder="홍길동"/></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>유효기간</label><input id="cardExp" placeholder="MM/YY" maxlength="5" oninput="fmtExp(this)"/></div>
@@ -117,10 +141,10 @@
           <select id="cardInst"><option>일시불</option><option>2개월</option><option>3개월</option><option>6개월</option><option>12개월</option></select>
         </div>
       </div>
-      <div id="bankDetail" style="display:none;margin-top:16px;padding:16px;background:#f8f9fa;border-radius:10px;">
-        <p style="font-size:14px;font-weight:700;color:#0f3460;margin-bottom:8px;">입금 계좌 안내</p>
+      <div id="bankDetail" style="display:none;margin-top:14px;padding:14px;background:#f8f9fa;border-radius:10px;">
+        <p style="font-size:14px;font-weight:700;color:#0f3460;margin-bottom:6px;">입금 계좌 안내</p>
         <p style="font-size:13px;color:#555;">국민은행 123-456-789012 · 예금주: (주)ShopMind</p>
-        <p style="font-size:12px;color:#e94560;margin-top:8px;">※ 주문 후 24시간 이내 미입금 시 자동 취소됩니다.</p>
+        <p style="font-size:12px;color:#e94560;margin-top:6px;">※ 24시간 이내 미입금 시 자동 취소</p>
       </div>
     </div>
   </div>
@@ -128,7 +152,7 @@
     <div class="card" style="position:sticky;top:20px;">
       <h3>🧾 주문 요약</h3>
       <div id="orderList"></div>
-      <div style="margin-top:16px;">
+      <div style="margin-top:14px;">
         <div class="summary-row"><span>상품 금액</span><span id="sumPrice"></span></div>
         <div class="summary-row"><span>배송비</span><span id="sumShip"></span></div>
         <div class="summary-row total"><span>최종 결제금액</span><span id="sumTotal"></span></div>
@@ -140,18 +164,15 @@
 </div>
 <div id="doneScreen" class="done-screen">
   <div class="done-icon">🎉</div>
-  <div class="done-title">주문이 완료되었습니다!</div>
+  <div class="done-title">주문 완료!</div>
   <div class="done-sub" id="doneMsg"></div>
   <button class="done-btn" onclick="location.href='index.html'">쇼핑 계속하기</button>
 </div>
 <script>
-  let currentUser=null, cart=[];
-  let selPay='카드결제';
-
-  function waitFB(fn){ if(window._fbReady) fn(); else document.addEventListener('fbReady',fn,{once:true}); }
-
+  let currentUser=null,cart=[],selPay='카드결제';
+  function waitFB(fn){if(window._fbReady)fn();else document.addEventListener('fbReady',fn,{once:true});}
   waitFB(()=>{
-    window._authFn.onAuthStateChanged(window._auth, user=>{
+    window._authFn.onAuthStateChanged(window._auth,user=>{
       if(!user){location.href='login.html';return;}
       currentUser=user;
       cart=JSON.parse(sessionStorage.getItem('cart_'+user.uid)||'[]');
@@ -159,58 +180,35 @@
       renderOrder();
     });
   });
-
-  function selectPay(el,name){
-    selPay=name;
-    document.querySelectorAll('.pay-card').forEach(c=>c.classList.remove('selected'));
-    el.classList.add('selected');
-    document.getElementById('cardDetail').style.display=name==='카드결제'?'block':'none';
-    document.getElementById('bankDetail').style.display=name==='무통장입금'?'block':'none';
-  }
+  function selectPay(el,name){selPay=name;document.querySelectorAll('.pay-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');document.getElementById('cardDetail').style.display=name==='카드결제'?'block':'none';document.getElementById('bankDetail').style.display=name==='무통장입금'?'block':'none';}
   function fmtCard(el){let v=el.value.replace(/\D/g,'').substring(0,16);el.value=v.replace(/(\d{4})/g,'$1-').replace(/-$/,'');}
   function fmtExp(el){let v=el.value.replace(/\D/g,'').substring(0,4);if(v.length>=3)v=v.substring(0,2)+'/'+v.substring(2);el.value=v;}
-
   function renderOrder(){
     document.getElementById('orderList').innerHTML=cart.map(i=>`
       <div class="order-item">
-        <div class="order-emoji">${i.emoji}</div>
+        <div class="order-img">${i.imageUrl?`<img src="${i.imageUrl}"/>`:(i.emoji||'🛍️')}</div>
         <div class="order-info"><div class="order-name">${i.name}</div><div class="order-qty">수량: ${i.qty}개</div></div>
         <div class="order-price">₩${(i.price*i.qty).toLocaleString()}</div>
       </div>`).join('');
-    const sub=cart.reduce((s,i)=>s+i.price*i.qty,0);
-    const ship=sub>=50000?0:3000;
+    const sub=cart.reduce((s,i)=>s+i.price*i.qty,0),ship=sub>=50000?0:3000;
     document.getElementById('sumPrice').textContent='₩'+sub.toLocaleString();
     document.getElementById('sumShip').textContent=ship===0?'무료':'₩'+ship.toLocaleString();
     document.getElementById('sumTotal').textContent='₩'+(sub+ship).toLocaleString();
   }
-
   async function pay(){
-    const name=document.getElementById('rname').value.trim();
-    const phone=document.getElementById('rphone').value.trim();
-    const addr=document.getElementById('raddr1').value.trim();
+    const name=document.getElementById('rname').value.trim(),phone=document.getElementById('rphone').value.trim(),addr=document.getElementById('raddr1').value.trim();
     if(!name||!phone||!addr)return alert('배송지 정보를 모두 입력해주세요.');
-    if(selPay==='카드결제'){
-      if(document.getElementById('cardNo').value.replace(/-/g,'').length!==16) return alert('카드 정보를 올바르게 입력해주세요.');
-    }
-    const sub=cart.reduce((s,i)=>s+i.price*i.qty,0);
-    const ship=sub>=50000?0:3000;
-    const total=sub+ship;
+    if(selPay==='카드결제'&&document.getElementById('cardNo').value.replace(/-/g,'').length!==16)return alert('카드 정보를 올바르게 입력해주세요.');
+    const sub=cart.reduce((s,i)=>s+i.price*i.qty,0),ship=sub>=50000?0:3000,total=sub+ship;
     const orderNo='ORD-'+Date.now().toString().slice(-8);
     waitFB(async()=>{
       const {collection,addDoc}=window._fsFn;
-      await addDoc(collection(window._db,'orders'),{
-        orderNo, uid:currentUser.uid, email:currentUser.email,
-        items:cart.map(i=>({name:i.name,emoji:i.emoji,price:i.price,qty:i.qty})),
-        address:addr, pay:selPay, total,
-        date:new Date().toLocaleString('ko-KR')
-      });
+      await addDoc(collection(window._db,'orders'),{orderNo,uid:currentUser.uid,email:currentUser.email,items:cart.map(i=>({name:i.name,imageUrl:i.imageUrl||'',emoji:i.emoji||'',price:i.price,qty:i.qty})),address:addr,pay:selPay,total,date:new Date().toLocaleString('ko-KR')});
       sessionStorage.removeItem('cart_'+currentUser.uid);
       document.getElementById('mainSection').style.display='none';
       document.getElementById('doneScreen').classList.add('show');
-      document.getElementById('doneMsg').innerHTML=
-        `주문번호: <b>${orderNo}</b><br/>결제수단: ${selPay}<br/>결제금액: ₩${total.toLocaleString()}<br/>배송지: ${addr}<br/><br/>주문해주셔서 감사합니다! 🙏`;
+      document.getElementById('doneMsg').innerHTML=`주문번호: <b>${orderNo}</b><br/>결제수단: ${selPay}<br/>결제금액: ₩${total.toLocaleString()}<br/>배송지: ${addr}<br/><br/>감사합니다! 🙏`;
     });
   }
 </script>
-</body>
-</html>
+</body></html>
