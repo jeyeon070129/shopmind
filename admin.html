@@ -402,27 +402,28 @@ document.getElementById("submitProdBtn").addEventListener("click", function() {
 
 // ── 상품 목록 ─────────────────────────────────────────────────────────────────
 function loadProducts() {
-  waitFB(async function() {
-    var snap = await getFS().getDocs(getFS().collection(getDB(),"products"));
-    var el   = document.getElementById("productTable");
-    if (snap.empty) { el.innerHTML='<div class="no-data">등록된 상품이 없습니다.</div>'; return; }
-    var html = '<table><tr><th>이미지</th><th>상품명</th><th>카테고리</th><th>가격</th><th>설명</th><th>삭제</th></tr>';
-    snap.docs.forEach(function(d) {
-      var p = d.data();
-      var th = p.imageUrl ? '<img src="'+p.imageUrl+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;"/>' : '🛍️';
-      html += '<tr>'
-        + '<td><div class="prod-thumb">'+th+'</div></td>'
-        + '<td><b>'+p.name+'</b></td>'
-        + '<td><span style="background:#e8f4fd;color:#0f3460;padding:2px 7px;border-radius:10px;font-size:11px;">'+p.cat+'</span></td>'
-        + '<td style="color:#e94560;font-weight:700;">₩'+p.price.toLocaleString()+'</td>'
-        + '<td style="color:#888;">'+(p.desc||"").substring(0,28)+'...</td>'
-        + '<td><button class="del-btn" data-id="'+d.id+'" data-url="'+(p.imageUrl||'')+'">🗑 삭제</button></td>'
-        + '</tr>';
-    });
-    html += '</table>';
-    el.innerHTML = html;
-    el.querySelectorAll(".del-btn").forEach(function(btn) {
-      btn.addEventListener("click", function() { delProduct(btn.dataset.id, btn.dataset.url); });
+  waitFB(function() {
+    getFS().onSnapshot(getFS().collection(getDB(),"products"), function(snap) {
+      var el = document.getElementById("productTable");
+      if (snap.empty) { el.innerHTML='<div class="no-data">등록된 상품이 없습니다.</div>'; return; }
+      var html = '<table><tr><th>이미지</th><th>상품명</th><th>카테고리</th><th>가격</th><th>설명</th><th>삭제</th></tr>';
+      snap.docs.forEach(function(d) {
+        var p = d.data();
+        var th = p.imageUrl ? '<img src="'+p.imageUrl+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;"/>' : '🛍️';
+        html += '<tr>'
+          + '<td><div class="prod-thumb">'+th+'</div></td>'
+          + '<td><b>'+p.name+'</b></td>'
+          + '<td><span style="background:#e8f4fd;color:#0f3460;padding:2px 7px;border-radius:10px;font-size:11px;">'+p.cat+'</span></td>'
+          + '<td style="color:#e94560;font-weight:700;">₩'+p.price.toLocaleString()+'</td>'
+          + '<td style="color:#888;">'+(p.desc||"").substring(0,28)+'...</td>'
+          + '<td><button class="del-btn" data-id="'+d.id+'" data-url="'+(p.imageUrl||'')+'">🗑 삭제</button></td>'
+          + '</tr>';
+      });
+      html += '</table>';
+      el.innerHTML = html;
+      el.querySelectorAll(".del-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() { delProduct(btn.dataset.id, btn.dataset.url); });
+      });
     });
   });
 }
@@ -440,47 +441,49 @@ function delProduct(id, imageUrl) {
 
 // ── 주문 내역 ─────────────────────────────────────────────────────────────────
 function loadOrders() {
-  waitFB(async function() {
-    var snap = await getFS().getDocs(getFS().collection(getDB(),"orders"));
-    var el   = document.getElementById("orderTable");
-    if (snap.empty) { el.innerHTML='<div class="no-data">주문 내역이 없습니다.</div>'; return; }
-    var html = '<table><tr><th>주문번호</th><th>이메일</th><th>상품</th><th>결제수단</th><th>금액</th><th>날짜</th></tr>';
-    snap.docs.forEach(function(d) {
-      var o = d.data();
-      html += '<tr>'
-        + '<td style="font-size:11px;color:#888;">'+o.orderNo+'</td>'
-        + '<td>'+(o.email||o.uid)+'</td>'
-        + '<td>'+o.items.map(function(i){return i.name;}).join(", ")+'</td>'
-        + '<td>'+o.pay+'</td>'
-        + '<td style="color:#e94560;font-weight:700;">₩'+o.total.toLocaleString()+'</td>'
-        + '<td style="font-size:11px;color:#888;">'+o.date+'</td>'
-        + '</tr>';
+  waitFB(function() {
+    getFS().onSnapshot(getFS().collection(getDB(),"orders"), function(snap) {
+      var el = document.getElementById("orderTable");
+      if (snap.empty) { el.innerHTML='<div class="no-data">주문 내역이 없습니다.</div>'; return; }
+      var html = '<table><tr><th>주문번호</th><th>이메일</th><th>상품</th><th>결제수단</th><th>금액</th><th>날짜</th></tr>';
+      snap.docs.forEach(function(d) {
+        var o = d.data();
+        html += '<tr>'
+          + '<td style="font-size:11px;color:#888;">'+o.orderNo+'</td>'
+          + '<td>'+(o.email||o.uid)+'</td>'
+          + '<td>'+o.items.map(function(i){return i.name;}).join(", ")+'</td>'
+          + '<td>'+o.pay+'</td>'
+          + '<td style="color:#e94560;font-weight:700;">₩'+o.total.toLocaleString()+'</td>'
+          + '<td style="font-size:11px;color:#888;">'+o.date+'</td>'
+          + '</tr>';
+      });
+      el.innerHTML = html + '</table>';
     });
-    el.innerHTML = html + '</table>';
   });
 }
 
 // ── 회원 목록 ─────────────────────────────────────────────────────────────────
 function loadUsers() {
-  waitFB(async function() {
-    var snap = await getFS().getDocs(getFS().collection(getDB(),"users"));
-    var el   = document.getElementById("userTable");
-    if (snap.empty) { el.innerHTML='<div class="no-data">회원이 없습니다.</div>'; return; }
-    var html = '<table><tr><th>이메일</th><th>이름</th><th>권한</th><th>가입일</th><th>관리</th></tr>';
-    snap.docs.forEach(function(d) {
-      var u = d.data();
-      var isAdmin = u.role === "admin";
-      html += '<tr>'
-        + '<td>'+u.email+'</td>'
-        + '<td>'+u.name+'</td>'
-        + '<td><span style="background:'+(isAdmin?"#fff8e1":"#f0f4ff")+';color:'+(isAdmin?"#f57f17":"#0f3460")+';padding:2px 7px;border-radius:10px;font-size:11px;">'+(isAdmin?"관리자":"일반회원")+'</span></td>'
-        + '<td style="font-size:11px;color:#888;">'+(u.createdAt||"").substring(0,10)+'</td>'
-        + '<td><button class="del-btn" data-id="'+d.id+'">🗑 삭제</button></td>'
-        + '</tr>';
-    });
-    el.innerHTML = html + '</table>';
-    el.querySelectorAll(".del-btn").forEach(function(btn) {
-      btn.addEventListener("click", function() { delUser(btn.dataset.id); });
+  waitFB(function() {
+    getFS().onSnapshot(getFS().collection(getDB(),"users"), function(snap) {
+      var el = document.getElementById("userTable");
+      if (snap.empty) { el.innerHTML='<div class="no-data">회원이 없습니다.</div>'; return; }
+      var html = '<table><tr><th>이메일</th><th>이름</th><th>권한</th><th>가입일</th><th>관리</th></tr>';
+      snap.docs.forEach(function(d) {
+        var u = d.data();
+        var isAdmin = u.role === "admin";
+        html += '<tr>'
+          + '<td>'+u.email+'</td>'
+          + '<td>'+u.name+'</td>'
+          + '<td><span style="background:'+(isAdmin?"#fff8e1":"#f0f4ff")+';color:'+(isAdmin?"#f57f17":"#0f3460")+';padding:2px 7px;border-radius:10px;font-size:11px;">'+(isAdmin?"관리자":"일반회원")+'</span></td>'
+          + '<td style="font-size:11px;color:#888;">'+(u.createdAt||"").substring(0,10)+'</td>'
+          + '<td><button class="del-btn" data-id="'+d.id+'">🗑 삭제</button></td>'
+          + '</tr>';
+      });
+      el.innerHTML = html + '</table>';
+      el.querySelectorAll(".del-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() { delUser(btn.dataset.id); });
+      });
     });
   });
 }
