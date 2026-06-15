@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>신제품 - 농약마켓</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"Segoe UI",sans-serif;background:#f4f6fb;}
+    nav{background:#0f3460;color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+    .logo{font-size:20px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+    .logo span{color:#e94560;}
+    .nav-links{display:flex;gap:14px;flex-wrap:nowrap;}
+    .nav-links a{color:#ccc;text-decoration:none;font-size:13px;white-space:nowrap;}
+    .nav-links a:hover,.nav-links a.active{color:#fff;font-weight:700;}
+    .nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .user-info{font-size:12px;color:#aaa;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cart-btn{background:#e94560;border:none;color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:700;font-size:12px;}
+    .logout-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;}
+    .logout-btn:hover{border-color:#fff;color:#fff;}
+    .admin-btn{background:#f39c12;border:none;color:#fff;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;}
+    @media(max-width:900px){.nav-links{gap:8px;}.nav-links a{font-size:11px;}}
+    @media(max-width:700px){.nav-links{display:none;}}
+    @media(max-width:480px){nav{padding:0 10px;}.user-info{display:none;}}
+    .page-hero{background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;padding:40px 20px;text-align:center;}
+    .page-hero h2{font-size:28px;font-weight:800;margin-bottom:8px;}
+    .page-hero p{font-size:14px;opacity:.9;}
+    .section{padding:28px 20px;max-width:1000px;margin:0 auto;}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;}
+    @media(min-width:600px){.products{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}}
+    .card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);transition:.2s;}
+    .card:hover{transform:translateY(-3px);}
+    .card-img{width:100%;height:150px;overflow:hidden;background:#f8f8f8;display:flex;align-items:center;justify-content:center;font-size:58px;}
+    .card-img img{width:100%;height:100%;object-fit:cover;}
+    .card-body{padding:12px;}
+    .new-badge{background:#e94560;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:5px;}
+    .card-cat{font-size:10px;background:#e8f4fd;color:#0f3460;padding:2px 7px;border-radius:10px;display:inline-block;margin-bottom:5px;margin-left:4px;}
+    .card-name{font-weight:700;font-size:13px;margin-bottom:3px;}
+    .card-desc{font-size:11px;color:#888;margin-bottom:8px;}
+    .card-footer{display:flex;align-items:center;justify-content:space-between;}
+    .price{font-size:14px;font-weight:800;color:#e94560;}
+    .add-btn{background:#0f3460;color:#fff;border:none;padding:5px 10px;border-radius:7px;font-size:11px;cursor:pointer;}
+    .add-btn:hover{background:#e94560;}
+    .empty{text-align:center;padding:60px;color:#aaa;}
+    footer{background:#0f3460;color:#aaa;text-align:center;padding:18px;font-size:13px;margin-top:20px;}
+  </style>
+</head><body>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs,
+             deleteDoc, onSnapshot, updateDoc, query, orderBy, where }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const app = initializeApp({
+      apiKey:"AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+      authDomain:"shopmind-21828.firebaseapp.com",
+      projectId:"shopmind-21828",
+      storageBucket:"shopmind-21828.firebasestorage.app",
+      messagingSenderId:"1038832915124",
+      appId:"1:1038832915124:web:7f230b88de063b737b7de1"
+    });
+    window._auth  = getAuth(app);
+    window._db    = getFirestore(app);
+    window._authFn= { signOut, onAuthStateChanged };
+    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs,
+                      deleteDoc, onSnapshot, updateDoc, query, orderBy, where };
+    window._fbReady=true;
+    document.dispatchEvent(new Event("fbReady"));
+  </script>
+<nav>
+  <div class="logo" id="goHome">농약<span>마켓</span></div>
+  <div class="nav-links">
+    <a href="new-products.html" id="navNew">신제품</a>
+    <a href="best.html" id="navBest">베스트</a>
+    <a href="product-info.html" id="navInfo">제품정보</a>
+    <a href="inquiry.html" id="navInquiry">문의하기</a>
+    <a href="notices.html" id="navNotice">공지사항</a>
+    <a href="ai-inquiry.html" id="navAI">AI문의</a>
+  </div>
+  <div class="nav-right">
+    <span class="user-info" id="userInfo"></span>
+    <button class="admin-btn" id="adminBtn" style="display:none">관리자</button>
+    <button class="cart-btn" id="cartBtn">🛒 <span id="cartCount">0</span></button>
+    <button class="logout-btn" id="logoutBtn">로그아웃</button>
+  </div>
+</nav>
+<div class="page-hero">
+  <h2>🌱 신제품</h2>
+  <p>최근 새로 등록된 신제품을 확인하세요!</p>
+</div>
+<div class="section">
+  <div id="productGrid"><div class="empty">⏳ 로딩 중...</div></div>
+</div>
+<footer>© 2025 농약마켓. All rights reserved.</footer>
+<script>
+
+  var currentUser = null, isAdmin = false, cart = [];
+  function waitFB(fn){if(window._fbReady)fn();else document.addEventListener("fbReady",fn,{once:true});}
+  function fs(){return window._fsFn;}
+  function db(){return window._db;}
+
+  document.getElementById("goHome").addEventListener("click",function(){location.href="index.html";});
+  document.getElementById("logoutBtn").addEventListener("click",doLogout);
+  document.getElementById("cartBtn").addEventListener("click",function(){location.href="index.html";});
+  var _ab=document.getElementById("adminBtn");
+  if(_ab) _ab.addEventListener("click",function(){location.href="admin.html";});
+
+  function doLogout(){window._authFn.signOut(window._auth).then(function(){sessionStorage.clear();location.href="login.html";});}
+  function updateCartCount(){var el=document.getElementById("cartCount");if(el)el.textContent=cart.reduce(function(s,i){return s+i.qty;},0);}
+
+  waitFB(function(){
+    window._authFn.onAuthStateChanged(window._auth,async function(user){
+      if(!user){location.href="login.html";return;}
+      currentUser=user;
+      var snap=await fs().getDoc(fs().doc(db(),"users",user.uid));
+      var data=snap.data()||{};
+      document.getElementById("userInfo").textContent=(data.name||user.email.split("@")[0])+"님";
+      isAdmin=data.role==="admin";
+      if(isAdmin&&document.getElementById("adminBtn"))document.getElementById("adminBtn").style.display="block";
+      cart=JSON.parse(sessionStorage.getItem("cart_"+user.uid)||"[]");
+      updateCartCount();
+      if(typeof onAuthReady==="function")onAuthReady(user,data);
+    });
+  });
+  function onAuthReady(){
+    fs().onSnapshot(fs().collection(db(),"products"),function(snap){
+      var prods=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());}).filter(function(p){return p.isNew;});
+      var grid=document.getElementById("productGrid");
+      if(!prods.length){grid.innerHTML='<div class="empty">😢 신제품이 없습니다.<br/>관리자가 신제품을 등록하면 여기에 표시됩니다.</div>';return;}
+      var html="";
+      prods.forEach(function(p){
+        var img=p.imageUrl?'<img src="'+p.imageUrl+'"/>':"<span>"+(p.emoji||"🛍️")+"</span>";
+        html+='<div class="card"><div class="card-img">'+img+'</div><div class="card-body"><span class="new-badge">NEW</span><span class="card-cat">'+p.cat+'</span><div class="card-name">'+p.name+'</div><div class="card-desc">'+(p.desc||"").substring(0,30)+'...</div><div class="card-footer"><span class="price">₩'+p.price.toLocaleString()+'</span><button class="add-btn">담기</button></div></div></div>';
+      });
+      grid.innerHTML='<div class="products">'+html+'</div>';
+    });
+  }
+</script></body></html>

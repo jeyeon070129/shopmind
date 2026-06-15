@@ -70,7 +70,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signOut, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot }
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot, updateDoc, query, orderBy, where }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
@@ -86,7 +86,7 @@
     window._db     = getFirestore(app);
     window._storage= getStorage(app);
     window._authFn = { signOut, onAuthStateChanged };
-    window._fsFn   = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot };
+    window._fsFn   = { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, onSnapshot, updateDoc, query, orderBy, where };
     window._stFn   = { ref, uploadBytes, getDownloadURL, deleteObject };
     window._fbReady= true;
     document.dispatchEvent(new Event("fbReady"));
@@ -102,9 +102,12 @@
   <div class="tab-nav" id="tabNav">
     <button class="active" data-tab="dashboard">📊 대시보드</button>
     <button data-tab="products">📦 상품관리</button>
+    <button data-tab="newproducts">🌱 신제품관리</button>
+    <button data-tab="productinfo">🌿 제품정보관리</button>
     <button data-tab="categories">🏷️ 카테고리</button>
     <button data-tab="orders">🧾 주문내역</button>
     <button data-tab="users">👥 회원관리</button>
+    <button data-tab="inquiry">💬 문의관리</button>
     <button data-tab="notice">📢 공지사항</button>
   </div>
 
@@ -185,6 +188,51 @@
     <div class="card"><h3>👥 회원 목록</h3><div id="userTable"><div class="no-data">로딩 중...</div></div></div>
   </div>
 
+  <!-- 신제품 관리 -->
+  <div class="tab-content" id="tab-newproducts">
+    <div class="card">
+      <h3>🌱 신제품 관리</h3>
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">체크된 상품은 스토어 신제품 페이지와 NEW 배지로 표시됩니다.</p>
+      <div id="newProdTable"><div class="no-data">로딩 중...</div></div>
+    </div>
+  </div>
+
+  <!-- 제품정보 관리 -->
+  <div class="tab-content" id="tab-productinfo">
+    <div class="card">
+      <h3>➕ 제품정보 추가</h3>
+      <div id="infoMsg" class="msg"></div>
+      <div class="prod-form">
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">제품명 *</label><input id="iName" placeholder="예: 스미치온"/></div>
+        <div><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">이모지</label><input id="iEmoji" placeholder="예: 🌿" maxlength="4"/></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">제품 설명 *</label><textarea id="iDesc" placeholder="제품에 대한 설명을 입력하세요."></textarea></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">적용 작물 (쉼표로 구분) *</label><input id="iCrops" placeholder="예: 사과, 배, 고추, 벼"/></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">방제 해충 (쉼표로 구분)</label><input id="iPests" placeholder="예: 진딧물, 응애, 벼멸구"/></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">영양제 효과</label><input id="iNutrients" placeholder="예: 착과 촉진, 열매 품질 향상"/></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">사용 방법</label><input id="iUsage" placeholder="예: 물 1000배 희석 후 경엽 살포"/></div>
+        <div class="full"><label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:4px;">⚠️ 주의사항</label><input id="iCaution" placeholder="예: 수확 7일 전 사용 중지, 농약과 혼용 금지"/></div>
+        <button class="submit-btn" id="submitInfoBtn">✅ 제품정보 등록하기</button>
+      </div>
+    </div>
+    <div class="card"><h3>📋 등록된 제품정보 목록</h3><div id="infoTable"><div class="no-data">로딩 중...</div></div></div>
+  </div>
+
+  <!-- 문의 관리 -->
+  <div class="tab-content" id="tab-inquiry">
+    <div class="card"><h3>💬 고객 문의 관리</h3><div id="inquiryList"><div class="no-data">로딩 중...</div></div></div>
+  </div>
+  <!-- 답변 모달 -->
+  <div id="replyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:500px;position:relative;">
+      <button id="replyModalClose" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;">✕</button>
+      <h3 style="font-size:17px;font-weight:800;color:#0f3460;margin-bottom:6px;">💬 문의 답변</h3>
+      <div id="replyQuestion" style="background:#f8f9fa;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:#555;line-height:1.6;"></div>
+      <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:6px;">답변 내용</label>
+      <textarea id="replyText" style="width:100%;padding:11px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;outline:none;resize:none;height:100px;" placeholder="답변을 입력해주세요."></textarea>
+      <button id="submitReplyBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#0f3460,#e94560);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;">답변 등록</button>
+    </div>
+  </div>
+
   <!-- 공지사항 -->
   <div class="tab-content" id="tab-notice">
     <div class="card">
@@ -208,7 +256,7 @@ function getDB() { return window._db; }
 function getFS() { return window._fsFn; }
 
 // ── 탭 전환 (addEventListener 방식) ──────────────────────────────────────────
-var TABS = ["dashboard","products","categories","orders","users","notice"];
+var TABS = ["dashboard","products","newproducts","productinfo","categories","orders","users","inquiry","notice"];
 document.getElementById("tabNav").querySelectorAll("button").forEach(function(btn) {
   btn.addEventListener("click", function() {
     var t = btn.dataset.tab;

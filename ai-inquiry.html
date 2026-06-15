@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AI문의 - 농약마켓</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"Segoe UI",sans-serif;background:#f4f6fb;}
+    nav{background:#0f3460;color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+    .logo{font-size:20px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+    .logo span{color:#e94560;}
+    .nav-links{display:flex;gap:14px;flex-wrap:nowrap;}
+    .nav-links a{color:#ccc;text-decoration:none;font-size:13px;white-space:nowrap;}
+    .nav-links a:hover,.nav-links a.active{color:#fff;font-weight:700;}
+    .nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .user-info{font-size:12px;color:#aaa;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cart-btn{background:#e94560;border:none;color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:700;font-size:12px;}
+    .logout-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;}
+    .logout-btn:hover{border-color:#fff;color:#fff;}
+    .admin-btn{background:#f39c12;border:none;color:#fff;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;}
+    @media(max-width:900px){.nav-links{gap:8px;}.nav-links a{font-size:11px;}}
+    @media(max-width:700px){.nav-links{display:none;}}
+    @media(max-width:480px){nav{padding:0 10px;}.user-info{display:none;}}
+    .page-hero{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:40px 20px;text-align:center;}
+    .page-hero h2{font-size:28px;font-weight:800;margin-bottom:8px;}
+    .page-hero p{font-size:14px;opacity:.8;}
+    .wrap{max-width:700px;margin:28px auto;padding:0 16px;}
+    .search-card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:20px;}
+    .search-card h3{font-size:17px;font-weight:800;color:#0f3460;margin-bottom:14px;}
+    .search-row{display:flex;gap:10px;}
+    .search-row input{flex:1;padding:11px 16px;border:1.5px solid #ddd;border-radius:25px;font-size:14px;outline:none;}
+    .search-row input:focus{border-color:#0f3460;}
+    .search-row button{padding:11px 20px;background:linear-gradient(135deg,#1a1a2e,#e94560);color:#fff;border:none;border-radius:25px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;}
+    .suggest-btns{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;}
+    .suggest-btn{padding:6px 13px;background:#f0f4ff;color:#0f3460;border:none;border-radius:20px;font-size:12px;cursor:pointer;}
+    .suggest-btn:hover{background:#0f3460;color:#fff;}
+    .result-card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:14px;}
+    .ai-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+    .ai-icon{font-size:28px;}
+    .ai-label{font-size:14px;font-weight:700;color:#0f3460;}
+    .ai-sub{font-size:12px;color:#888;}
+    .result-item{border:1.5px solid #eee;border-radius:12px;padding:14px;margin-bottom:10px;}
+    .result-name{font-weight:700;font-size:14px;color:#0f3460;margin-bottom:6px;}
+    .tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+    .tag{font-size:11px;padding:3px 8px;border-radius:10px;}
+    .tag.crop{background:#e8f5e9;color:#2e7d32;}
+    .tag.pest{background:#fce4ec;color:#c62828;}
+    .result-desc{font-size:12px;color:#666;line-height:1.6;}
+    .no-result{text-align:center;padding:30px;color:#aaa;}
+    .tip-box{background:#f0f4ff;border-radius:12px;padding:14px;margin-top:14px;font-size:13px;color:#555;line-height:1.7;}
+    footer{background:#0f3460;color:#aaa;text-align:center;padding:18px;font-size:13px;margin-top:10px;}
+  </style>
+</head><body>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs,
+             deleteDoc, onSnapshot, updateDoc, query, orderBy, where }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const app = initializeApp({
+      apiKey:"AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+      authDomain:"shopmind-21828.firebaseapp.com",
+      projectId:"shopmind-21828",
+      storageBucket:"shopmind-21828.firebasestorage.app",
+      messagingSenderId:"1038832915124",
+      appId:"1:1038832915124:web:7f230b88de063b737b7de1"
+    });
+    window._auth  = getAuth(app);
+    window._db    = getFirestore(app);
+    window._authFn= { signOut, onAuthStateChanged };
+    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs,
+                      deleteDoc, onSnapshot, updateDoc, query, orderBy, where };
+    window._fbReady=true;
+    document.dispatchEvent(new Event("fbReady"));
+  </script>
+<nav>
+  <div class="logo" id="goHome">농약<span>마켓</span></div>
+  <div class="nav-links">
+    <a href="new-products.html" id="navNew">신제품</a>
+    <a href="best.html" id="navBest">베스트</a>
+    <a href="product-info.html" id="navInfo">제품정보</a>
+    <a href="inquiry.html" id="navInquiry">문의하기</a>
+    <a href="notices.html" id="navNotice">공지사항</a>
+    <a href="ai-inquiry.html" id="navAI">AI문의</a>
+  </div>
+  <div class="nav-right">
+    <span class="user-info" id="userInfo"></span>
+    <button class="admin-btn" id="adminBtn" style="display:none">관리자</button>
+    <button class="cart-btn" id="cartBtn">🛒 <span id="cartCount">0</span></button>
+    <button class="logout-btn" id="logoutBtn">로그아웃</button>
+  </div>
+</nav>
+<div class="page-hero">
+  <h2>🤖 AI 제품 검색</h2>
+  <p>작물명, 해충명, 제품명으로 검색하면 관련 제품 정보를 알려드려요!</p>
+</div>
+<div class="wrap">
+  <div class="search-card">
+    <h3>🔍 검색하기</h3>
+    <div class="search-row">
+      <input id="aiInput" placeholder="예: 사과 진딧물, 고추 탄저병, 벼 멸구..."/>
+      <button id="searchBtn">검색</button>
+    </div>
+    <div class="suggest-btns">
+      <button class="suggest-btn" data-q="사과">🍎 사과</button>
+      <button class="suggest-btn" data-q="벼">🌾 벼</button>
+      <button class="suggest-btn" data-q="고추">🌶️ 고추</button>
+      <button class="suggest-btn" data-q="진딧물">🐛 진딧물</button>
+      <button class="suggest-btn" data-q="탄저병">🍂 탄저병</button>
+      <button class="suggest-btn" data-q="영양제">💊 영양제</button>
+      <button class="suggest-btn" data-q="살충">🦟 살충</button>
+    </div>
+  </div>
+  <div id="resultArea"></div>
+</div>
+<footer>© 2025 농약마켓. All rights reserved.</footer>
+<script>
+
+  var currentUser = null, isAdmin = false, cart = [];
+  function waitFB(fn){if(window._fbReady)fn();else document.addEventListener("fbReady",fn,{once:true});}
+  function fs(){return window._fsFn;}
+  function db(){return window._db;}
+
+  document.getElementById("goHome").addEventListener("click",function(){location.href="index.html";});
+  document.getElementById("logoutBtn").addEventListener("click",doLogout);
+  document.getElementById("cartBtn").addEventListener("click",function(){location.href="index.html";});
+  var _ab=document.getElementById("adminBtn");
+  if(_ab) _ab.addEventListener("click",function(){location.href="admin.html";});
+
+  function doLogout(){window._authFn.signOut(window._auth).then(function(){sessionStorage.clear();location.href="login.html";});}
+  function updateCartCount(){var el=document.getElementById("cartCount");if(el)el.textContent=cart.reduce(function(s,i){return s+i.qty;},0);}
+
+  waitFB(function(){
+    window._authFn.onAuthStateChanged(window._auth,async function(user){
+      if(!user){location.href="login.html";return;}
+      currentUser=user;
+      var snap=await fs().getDoc(fs().doc(db(),"users",user.uid));
+      var data=snap.data()||{};
+      document.getElementById("userInfo").textContent=(data.name||user.email.split("@")[0])+"님";
+      isAdmin=data.role==="admin";
+      if(isAdmin&&document.getElementById("adminBtn"))document.getElementById("adminBtn").style.display="block";
+      cart=JSON.parse(sessionStorage.getItem("cart_"+user.uid)||"[]");
+      updateCartCount();
+      if(typeof onAuthReady==="function")onAuthReady(user,data);
+    });
+  });
+  var _infos=[], _prods=[];
+
+  document.getElementById("searchBtn").addEventListener("click",doSearch);
+  document.getElementById("aiInput").addEventListener("keydown",function(e){if(e.key==="Enter")doSearch();});
+  document.querySelectorAll(".suggest-btn").forEach(function(btn){
+    btn.addEventListener("click",function(){document.getElementById("aiInput").value=btn.dataset.q;doSearch();});
+  });
+
+  function onAuthReady(){
+    fs().getDocs(fs().collection(db(),"productInfos")).then(function(snap){
+      _infos=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    });
+    fs().getDocs(fs().collection(db(),"products")).then(function(snap){
+      _prods=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    });
+  }
+
+  function doSearch(){
+    var q=document.getElementById("aiInput").value.trim().toLowerCase();
+    if(!q)return;
+    var area=document.getElementById("resultArea");
+    area.innerHTML='<div class="result-card"><div style="text-align:center;padding:20px;color:#888;">🔍 검색 중...</div></div>';
+
+    setTimeout(function(){
+      // productInfos에서 검색
+      var infoResults=_infos.filter(function(p){
+        return p.name.toLowerCase().indexOf(q)>=0
+          ||(p.crops||"").toLowerCase().indexOf(q)>=0
+          ||(p.pests||"").toLowerCase().indexOf(q)>=0
+          ||(p.desc||"").toLowerCase().indexOf(q)>=0
+          ||(p.nutrients||"").toLowerCase().indexOf(q)>=0;
+      });
+
+      // products에서도 검색
+      var prodResults=_prods.filter(function(p){
+        return p.name.toLowerCase().indexOf(q)>=0
+          ||(p.desc||"").toLowerCase().indexOf(q)>=0;
+      });
+
+      var html='<div class="result-card">'
+        +'<div class="ai-header"><div class="ai-icon">🤖</div><div><div class="ai-label">AI 검색 결과</div><div class="ai-sub">"'+q+'" 관련 제품 정보 '+(infoResults.length+prodResults.length)+'건 발견</div></div></div>';
+
+      if(!infoResults.length&&!prodResults.length){
+        html+='<div class="no-result">😢 관련 제품 정보를 찾지 못했습니다.<br/>다른 키워드로 검색해보세요!</div>';
+      } else {
+        if(infoResults.length){
+          html+='<div style="font-size:13px;font-weight:700;color:#2e7d32;margin-bottom:10px;">🌿 제품 상세 정보</div>';
+          infoResults.forEach(function(p){
+            var crops=(p.crops||"").split(",").filter(Boolean).map(function(c){return'<span class="tag crop">🌾'+c.trim()+'</span>';}).join("");
+            var pests=(p.pests||"").split(",").filter(Boolean).map(function(c){return'<span class="tag pest">🐛'+c.trim()+'</span>';}).join("");
+            html+='<div class="result-item">'
+              +'<div class="result-name">'+(p.emoji||"🌿")+" "+p.name+'</div>'
+              +'<div class="tag-row">'+crops+pests+'</div>'
+              +'<div class="result-desc">'+(p.desc||"")+'</div>'
+              +(p.nutrients?'<div style="font-size:12px;color:#1565c0;margin-top:4px;">💊 영양효과: '+p.nutrients+'</div>':"")
+              +(p.caution?'<div style="font-size:12px;color:#c62828;margin-top:4px;">⚠️ 주의: '+p.caution+'</div>':"")
+              +'</div>';
+          });
+        }
+        if(prodResults.length){
+          html+='<div style="font-size:13px;font-weight:700;color:#0f3460;margin:14px 0 10px;">🛍️ 관련 판매 상품</div>';
+          prodResults.forEach(function(p){
+            html+='<div class="result-item" style="cursor:pointer" onclick="location.href='index.html'">'
+              +'<div class="result-name">'+(p.emoji||"🛍️")+" "+p.name+' <span style="color:#e94560;font-size:12px;">₩'+p.price.toLocaleString()+'</span></div>'
+              +'<div class="result-desc">'+(p.desc||"")+'</div>'
+              +'</div>';
+          });
+        }
+        html+='<div class="tip-box">💡 <b>더 자세한 정보</b>가 필요하시면 <a href="inquiry.html" style="color:#4776e6;">문의하기</a> 탭에서 문의해주세요!</div>';
+      }
+      html+='</div>';
+      area.innerHTML=html;
+    },600);
+  }
+</script></body></html>

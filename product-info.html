@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>제품정보 - 농약마켓</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"Segoe UI",sans-serif;background:#f4f6fb;}
+    nav{background:#0f3460;color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+    .logo{font-size:20px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+    .logo span{color:#e94560;}
+    .nav-links{display:flex;gap:14px;flex-wrap:nowrap;}
+    .nav-links a{color:#ccc;text-decoration:none;font-size:13px;white-space:nowrap;}
+    .nav-links a:hover,.nav-links a.active{color:#fff;font-weight:700;}
+    .nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .user-info{font-size:12px;color:#aaa;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cart-btn{background:#e94560;border:none;color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:700;font-size:12px;}
+    .logout-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;}
+    .logout-btn:hover{border-color:#fff;color:#fff;}
+    .admin-btn{background:#f39c12;border:none;color:#fff;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;}
+    @media(max-width:900px){.nav-links{gap:8px;}.nav-links a{font-size:11px;}}
+    @media(max-width:700px){.nav-links{display:none;}}
+    @media(max-width:480px){nav{padding:0 10px;}.user-info{display:none;}}
+    .page-hero{background:linear-gradient(135deg,#1a6b3a,#2ecc71);color:#fff;padding:40px 20px;text-align:center;}
+    .page-hero h2{font-size:28px;font-weight:800;margin-bottom:8px;}
+    .page-hero p{font-size:14px;opacity:.9;}
+    .filter-bar{background:#fff;padding:14px 20px;border-bottom:1px solid #eee;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .filter-bar input{flex:1;min-width:150px;padding:8px 14px;border:1.5px solid #ddd;border-radius:20px;font-size:13px;outline:none;}
+    .filter-bar input:focus{border-color:#1a6b3a;}
+    .section{padding:24px 20px;max-width:1000px;margin:0 auto;}
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+    .info-card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 14px rgba(0,0,0,.08);cursor:pointer;transition:.2s;}
+    .info-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.12);}
+    .info-emoji{font-size:44px;margin-bottom:12px;text-align:center;}
+    .info-img{width:100%;height:120px;border-radius:10px;object-fit:cover;margin-bottom:12px;}
+    .info-name{font-size:16px;font-weight:800;color:#0f3460;margin-bottom:8px;}
+    .tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+    .tag{font-size:11px;padding:3px 8px;border-radius:10px;}
+    .tag.crop{background:#e8f5e9;color:#2e7d32;}
+    .tag.pest{background:#fce4ec;color:#c62828;}
+    .tag.nut{background:#e3f2fd;color:#1565c0;}
+    .info-desc{font-size:12px;color:#666;line-height:1.6;margin-top:8px;}
+    /* 상세 모달 */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;}
+    .modal-overlay.show{display:flex;}
+    .modal-box{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:540px;position:relative;max-height:90vh;overflow-y:auto;}
+    .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#888;}
+    .modal-emoji{font-size:64px;text-align:center;margin-bottom:14px;}
+    .modal-img{width:100%;height:180px;border-radius:12px;object-fit:cover;margin-bottom:14px;}
+    .modal-title{font-size:22px;font-weight:800;color:#0f3460;margin-bottom:14px;}
+    .info-table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+    .info-table th{background:#f0f4ff;padding:10px 12px;text-align:left;font-size:13px;color:#555;font-weight:700;white-space:nowrap;width:30%;}
+    .info-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#333;line-height:1.6;}
+    .empty{text-align:center;padding:60px;color:#aaa;}
+    footer{background:#0f3460;color:#aaa;text-align:center;padding:18px;font-size:13px;margin-top:20px;}
+  </style>
+</head><body>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs,
+             deleteDoc, onSnapshot, updateDoc, query, orderBy, where }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const app = initializeApp({
+      apiKey:"AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+      authDomain:"shopmind-21828.firebaseapp.com",
+      projectId:"shopmind-21828",
+      storageBucket:"shopmind-21828.firebasestorage.app",
+      messagingSenderId:"1038832915124",
+      appId:"1:1038832915124:web:7f230b88de063b737b7de1"
+    });
+    window._auth  = getAuth(app);
+    window._db    = getFirestore(app);
+    window._authFn= { signOut, onAuthStateChanged };
+    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs,
+                      deleteDoc, onSnapshot, updateDoc, query, orderBy, where };
+    window._fbReady=true;
+    document.dispatchEvent(new Event("fbReady"));
+  </script>
+<nav>
+  <div class="logo" id="goHome">농약<span>마켓</span></div>
+  <div class="nav-links">
+    <a href="new-products.html" id="navNew">신제품</a>
+    <a href="best.html" id="navBest">베스트</a>
+    <a href="product-info.html" id="navInfo">제품정보</a>
+    <a href="inquiry.html" id="navInquiry">문의하기</a>
+    <a href="notices.html" id="navNotice">공지사항</a>
+    <a href="ai-inquiry.html" id="navAI">AI문의</a>
+  </div>
+  <div class="nav-right">
+    <span class="user-info" id="userInfo"></span>
+    <button class="admin-btn" id="adminBtn" style="display:none">관리자</button>
+    <button class="cart-btn" id="cartBtn">🛒 <span id="cartCount">0</span></button>
+    <button class="logout-btn" id="logoutBtn">로그아웃</button>
+  </div>
+</nav>
+<div class="page-hero">
+  <h2>🌿 제품정보</h2>
+  <p>작물별 적용 농약·영양제, 해충 방제 정보를 확인하세요!</p>
+</div>
+<div class="filter-bar">
+  <input id="searchInput" placeholder="🔍 제품명 / 작물명 / 해충명 검색..."/>
+</div>
+<div class="section">
+  <div class="info-grid" id="infoGrid"><div class="empty">⏳ 로딩 중...</div></div>
+</div>
+<footer>© 2025 농약마켓. All rights reserved.</footer>
+
+<!-- 상세 모달 -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+
+  var currentUser = null, isAdmin = false, cart = [];
+  function waitFB(fn){if(window._fbReady)fn();else document.addEventListener("fbReady",fn,{once:true});}
+  function fs(){return window._fsFn;}
+  function db(){return window._db;}
+
+  document.getElementById("goHome").addEventListener("click",function(){location.href="index.html";});
+  document.getElementById("logoutBtn").addEventListener("click",doLogout);
+  document.getElementById("cartBtn").addEventListener("click",function(){location.href="index.html";});
+  var _ab=document.getElementById("adminBtn");
+  if(_ab) _ab.addEventListener("click",function(){location.href="admin.html";});
+
+  function doLogout(){window._authFn.signOut(window._auth).then(function(){sessionStorage.clear();location.href="login.html";});}
+  function updateCartCount(){var el=document.getElementById("cartCount");if(el)el.textContent=cart.reduce(function(s,i){return s+i.qty;},0);}
+
+  waitFB(function(){
+    window._authFn.onAuthStateChanged(window._auth,async function(user){
+      if(!user){location.href="login.html";return;}
+      currentUser=user;
+      var snap=await fs().getDoc(fs().doc(db(),"users",user.uid));
+      var data=snap.data()||{};
+      document.getElementById("userInfo").textContent=(data.name||user.email.split("@")[0])+"님";
+      isAdmin=data.role==="admin";
+      if(isAdmin&&document.getElementById("adminBtn"))document.getElementById("adminBtn").style.display="block";
+      cart=JSON.parse(sessionStorage.getItem("cart_"+user.uid)||"[]");
+      updateCartCount();
+      if(typeof onAuthReady==="function")onAuthReady(user,data);
+    });
+  });
+  var _infos=[];
+  document.getElementById("searchInput").addEventListener("input",filterInfos);
+  document.getElementById("modalClose").addEventListener("click",function(){document.getElementById("modalOverlay").classList.remove("show");});
+
+  function onAuthReady(){
+    fs().onSnapshot(fs().collection(db(),"productInfos"),function(snap){
+      _infos=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      filterInfos();
+    });
+  }
+
+  function filterInfos(){
+    var q=document.getElementById("searchInput").value.toLowerCase();
+    var f=q?_infos.filter(function(p){
+      return p.name.toLowerCase().indexOf(q)>=0
+        ||(p.crops||"").toLowerCase().indexOf(q)>=0
+        ||(p.pests||"").toLowerCase().indexOf(q)>=0
+        ||(p.desc||"").toLowerCase().indexOf(q)>=0;
+    }):_infos;
+    var grid=document.getElementById("infoGrid");
+    if(!f.length){grid.innerHTML='<div class="empty">😢 검색 결과가 없습니다.</div>';return;}
+    var html="";
+    f.forEach(function(p){
+      var imgHtml=p.imageUrl?'<img class="info-img" src="'+p.imageUrl+'"/>':"<div class='info-emoji'>"+(p.emoji||"🌿")+"</div>";
+      var crops=(p.crops||"").split(",").filter(Boolean).map(function(c){return'<span class="tag crop">🌾'+c.trim()+'</span>';}).join("");
+      var pests=(p.pests||"").split(",").filter(Boolean).map(function(c){return'<span class="tag pest">🐛'+c.trim()+'</span>';}).join("");
+      html+='<div class="info-card" data-id="'+p.id+'">'
+        +imgHtml
+        +'<div class="info-name">'+p.name+'</div>'
+        +'<div class="tag-row">'+crops+pests+'</div>'
+        +'<div class="info-desc">'+(p.desc||"").substring(0,60)+'...</div>'
+        +'</div>';
+    });
+    grid.innerHTML=html;
+    grid.querySelectorAll(".info-card").forEach(function(card){
+      card.addEventListener("click",function(){openModal(card.dataset.id);});
+    });
+  }
+
+  function openModal(id){
+    var p=_infos.find(function(x){return x.id===id;});if(!p)return;
+    var crops=(p.crops||"").split(",").filter(Boolean).map(function(c){return'<span class="tag crop">🌾'+c.trim()+'</span>';}).join(" ");
+    var pests=(p.pests||"").split(",").filter(Boolean).map(function(c){return'<span class="tag pest">🐛'+c.trim()+'</span>';}).join(" ");
+    var imgHtml=p.imageUrl?'<img class="modal-img" src="'+p.imageUrl+'"/>':"<div class='modal-emoji'>"+(p.emoji||"🌿")+"</div>";
+    document.getElementById("modalContent").innerHTML=
+      imgHtml
+      +'<div class="modal-title">'+p.name+'</div>'
+      +'<table class="info-table">'
+        +'<tr><th>제품 설명</th><td>'+(p.desc||"-")+'</td></tr>'
+        +'<tr><th>적용 작물</th><td>'+(crops||"-")+'</td></tr>'
+        +'<tr><th>방제 해충</th><td>'+(pests||"-")+'</td></tr>'
+        +'<tr><th>영양제 효과</th><td>'+(p.nutrients||"-")+'</td></tr>'
+        +'<tr><th>사용 방법</th><td>'+(p.usage||"-")+'</td></tr>'
+        +'<tr><th>⚠️ 주의사항</th><td style="color:#c62828;">'+(p.caution||"-")+'</td></tr>'
+      +'</table>';
+    document.getElementById("modalOverlay").classList.add("show");
+  }
+</script></body></html>

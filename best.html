@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>베스트 - 농약마켓</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"Segoe UI",sans-serif;background:#f4f6fb;}
+    nav{background:#0f3460;color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+    .logo{font-size:20px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+    .logo span{color:#e94560;}
+    .nav-links{display:flex;gap:14px;flex-wrap:nowrap;}
+    .nav-links a{color:#ccc;text-decoration:none;font-size:13px;white-space:nowrap;}
+    .nav-links a:hover,.nav-links a.active{color:#fff;font-weight:700;}
+    .nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .user-info{font-size:12px;color:#aaa;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cart-btn{background:#e94560;border:none;color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:700;font-size:12px;}
+    .logout-btn{background:transparent;border:1px solid #aaa;color:#aaa;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;}
+    .logout-btn:hover{border-color:#fff;color:#fff;}
+    .admin-btn{background:#f39c12;border:none;color:#fff;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;}
+    @media(max-width:900px){.nav-links{gap:8px;}.nav-links a{font-size:11px;}}
+    @media(max-width:700px){.nav-links{display:none;}}
+    @media(max-width:480px){nav{padding:0 10px;}.user-info{display:none;}}
+    .page-hero{background:linear-gradient(135deg,#f7971e,#ffd200);color:#333;padding:40px 20px;text-align:center;}
+    .page-hero h2{font-size:28px;font-weight:800;margin-bottom:8px;}
+    .page-hero p{font-size:14px;opacity:.8;}
+    .section{padding:28px 20px;max-width:1000px;margin:0 auto;}
+    .best-list{display:flex;flex-direction:column;gap:14px;}
+    .best-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.08);display:flex;align-items:center;gap:16px;}
+    .rank{font-size:28px;font-weight:900;min-width:44px;text-align:center;}
+    .rank.r1{color:#f7971e;}
+    .rank.r2{color:#aaa;}
+    .rank.r3{color:#cd7f32;}
+    .rank.rn{color:#888;font-size:20px;}
+    .prod-img{width:64px;height:64px;border-radius:10px;overflow:hidden;background:#f8f8f8;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;}
+    .prod-img img{width:100%;height:100%;object-fit:cover;}
+    .prod-info{flex:1;}
+    .prod-name{font-weight:700;font-size:15px;color:#0f3460;margin-bottom:4px;}
+    .prod-cat{font-size:11px;background:#e8f4fd;color:#0f3460;padding:2px 7px;border-radius:10px;display:inline-block;margin-bottom:4px;}
+    .prod-price{font-size:14px;font-weight:800;color:#e94560;}
+    .order-count{font-size:12px;color:#888;margin-top:2px;}
+    .add-btn{background:#0f3460;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;flex-shrink:0;}
+    .add-btn:hover{background:#e94560;}
+    .empty{text-align:center;padding:60px;color:#aaa;}
+    footer{background:#0f3460;color:#aaa;text-align:center;padding:18px;font-size:13px;margin-top:20px;}
+  </style>
+</head><body>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs,
+             deleteDoc, onSnapshot, updateDoc, query, orderBy, where }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const app = initializeApp({
+      apiKey:"AIzaSyDSnirMbrHQNdqoN_pAEgpKoRDqKPUBdnU",
+      authDomain:"shopmind-21828.firebaseapp.com",
+      projectId:"shopmind-21828",
+      storageBucket:"shopmind-21828.firebasestorage.app",
+      messagingSenderId:"1038832915124",
+      appId:"1:1038832915124:web:7f230b88de063b737b7de1"
+    });
+    window._auth  = getAuth(app);
+    window._db    = getFirestore(app);
+    window._authFn= { signOut, onAuthStateChanged };
+    window._fsFn  = { doc, setDoc, getDoc, collection, addDoc, getDocs,
+                      deleteDoc, onSnapshot, updateDoc, query, orderBy, where };
+    window._fbReady=true;
+    document.dispatchEvent(new Event("fbReady"));
+  </script>
+<nav>
+  <div class="logo" id="goHome">농약<span>마켓</span></div>
+  <div class="nav-links">
+    <a href="new-products.html" id="navNew">신제품</a>
+    <a href="best.html" id="navBest">베스트</a>
+    <a href="product-info.html" id="navInfo">제품정보</a>
+    <a href="inquiry.html" id="navInquiry">문의하기</a>
+    <a href="notices.html" id="navNotice">공지사항</a>
+    <a href="ai-inquiry.html" id="navAI">AI문의</a>
+  </div>
+  <div class="nav-right">
+    <span class="user-info" id="userInfo"></span>
+    <button class="admin-btn" id="adminBtn" style="display:none">관리자</button>
+    <button class="cart-btn" id="cartBtn">🛒 <span id="cartCount">0</span></button>
+    <button class="logout-btn" id="logoutBtn">로그아웃</button>
+  </div>
+</nav>
+<div class="page-hero">
+  <h2>🏆 베스트 상품</h2>
+  <p>주문 데이터를 분석해서 자동으로 인기 순위를 보여드려요!</p>
+</div>
+<div class="section">
+  <div id="bestList"><div class="empty">⏳ 분석 중...</div></div>
+</div>
+<footer>© 2025 농약마켓. All rights reserved.</footer>
+<script>
+
+  var currentUser = null, isAdmin = false, cart = [];
+  function waitFB(fn){if(window._fbReady)fn();else document.addEventListener("fbReady",fn,{once:true});}
+  function fs(){return window._fsFn;}
+  function db(){return window._db;}
+
+  document.getElementById("goHome").addEventListener("click",function(){location.href="index.html";});
+  document.getElementById("logoutBtn").addEventListener("click",doLogout);
+  document.getElementById("cartBtn").addEventListener("click",function(){location.href="index.html";});
+  var _ab=document.getElementById("adminBtn");
+  if(_ab) _ab.addEventListener("click",function(){location.href="admin.html";});
+
+  function doLogout(){window._authFn.signOut(window._auth).then(function(){sessionStorage.clear();location.href="login.html";});}
+  function updateCartCount(){var el=document.getElementById("cartCount");if(el)el.textContent=cart.reduce(function(s,i){return s+i.qty;},0);}
+
+  waitFB(function(){
+    window._authFn.onAuthStateChanged(window._auth,async function(user){
+      if(!user){location.href="login.html";return;}
+      currentUser=user;
+      var snap=await fs().getDoc(fs().doc(db(),"users",user.uid));
+      var data=snap.data()||{};
+      document.getElementById("userInfo").textContent=(data.name||user.email.split("@")[0])+"님";
+      isAdmin=data.role==="admin";
+      if(isAdmin&&document.getElementById("adminBtn"))document.getElementById("adminBtn").style.display="block";
+      cart=JSON.parse(sessionStorage.getItem("cart_"+user.uid)||"[]");
+      updateCartCount();
+      if(typeof onAuthReady==="function")onAuthReady(user,data);
+    });
+  });
+  function onAuthReady(){
+    // 주문 분석해서 베스트 상품 뽑기
+    Promise.all([
+      fs().getDocs(fs().collection(db(),"orders")),
+      fs().getDocs(fs().collection(db(),"products"))
+    ]).then(function(results){
+      var orders=results[0], prods=results[1];
+      var prodMap={};
+      prods.docs.forEach(function(d){prodMap[d.id]=Object.assign({id:d.id},d.data());});
+
+      // 상품별 주문 횟수 집계
+      var countMap={};
+      orders.docs.forEach(function(d){
+        var items=d.data().items||[];
+        items.forEach(function(item){
+          var key=item.name;
+          countMap[key]=(countMap[key]||0)+item.qty;
+        });
+      });
+
+      // 프로덕트와 매칭
+      var ranked=prods.docs.map(function(d){
+        var p=Object.assign({id:d.id},d.data());
+        p.orderCount=countMap[p.name]||0;
+        return p;
+      }).sort(function(a,b){return b.orderCount-a.orderCount;});
+
+      var el=document.getElementById("bestList");
+      if(!ranked.length){el.innerHTML='<div class="empty">😢 상품이 없습니다.</div>';return;}
+
+      var html='<div class="best-list">';
+      ranked.slice(0,20).forEach(function(p,i){
+        var rankClass=i===0?"r1":i===1?"r2":i===2?"r3":"rn";
+        var rankIcon=i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1);
+        var img=p.imageUrl?'<img src="'+p.imageUrl+'"/>':"<span>"+(p.emoji||"🛍️")+"</span>";
+        html+='<div class="best-card">'
+          +'<div class="rank '+rankClass+'">'+rankIcon+'</div>'
+          +'<div class="prod-img">'+img+'</div>'
+          +'<div class="prod-info">'
+            +'<span class="prod-cat">'+p.cat+'</span>'
+            +'<div class="prod-name">'+p.name+'</div>'
+            +'<div class="prod-price">₩'+p.price.toLocaleString()+'</div>'
+            +'<div class="order-count">📦 누적 주문 '+p.orderCount+'개</div>'
+          +'</div>'
+          +'<button class="add-btn" onclick="location.href='index.html'">구매하기</button>'
+        +'</div>';
+      });
+      html+='</div>';
+      el.innerHTML=html;
+    });
+  }
+</script></body></html>
